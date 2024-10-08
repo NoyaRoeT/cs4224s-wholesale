@@ -101,10 +101,11 @@ def check_test_partitions():
     connection.close()
 
 def main():
-    if sys.argv[1] == 'load':
-        load_test_data()
-    elif sys.argv[1] == 'worker':
-        check_test_partitions()
+    if (sys.argv.count > 1):
+        if sys.argv[1] == 'load':
+            load_test_data()
+        elif sys.argv[1] == 'worker':
+            check_test_partitions()
     else:
         run_test_query()
     

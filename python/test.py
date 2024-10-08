@@ -72,7 +72,7 @@ def run_test_query():
     print(f"Total number of users: {count}")
 
 def main():
-    if (sys.argv == 'load'):
+    if (sys.argv[1] == 'load'):
         load_test_data()
     else:
         run_test_query()

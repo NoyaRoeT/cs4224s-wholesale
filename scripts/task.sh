@@ -16,7 +16,7 @@ signal_db_ready() {
 }
 
 clean_up() {
-	rm -rf $HOME/$SLURM_JOB_ID
+	rm -rf $SIGNAL_DIR
 }
 
 wait_db_ready() {

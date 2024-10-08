@@ -114,7 +114,7 @@ fi
 
 if [ ${REMAINDER} -eq 0 ]; then
 	wait_clients_done
-
+	signal_worker_exit
 	if [ "${HOSTNAME}" = "$coordinator_node" ]; then
 		wait_workers_exit
 		echo "Performing clean up..."

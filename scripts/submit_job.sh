@@ -14,5 +14,5 @@ srun -l bash ./citus/setup-cluster.sh $coordinator_node
 wait
 
 # run application
-srun -l bash slurm_task.sh $coordinator_node
+srun -l bash task.sh $coordinator_node
 wait

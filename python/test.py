@@ -71,9 +71,40 @@ def run_test_query():
     count = cursor.fetchone()[0]
     print(f"Total number of users: {count}")
 
+def check_test_partitions():
+    connection = psycopg2.connect(
+            host=DB_HOST,
+            port=DB_PORT,
+            dbname=DB_NAME,
+            user=DB_USER,
+        )
+    cur = connection.cursor()
+
+    cur.execute("""
+        SELECT partition_name
+        FROM citus_get_table_partitions('public.users');
+    """)
+    partitions = cur.fetchall()
+
+    for partition in partitions:
+        partition_name = partition[0]
+        print(f"Records from partition: {partition_name}")
+        
+        cur.execute(f"SELECT * FROM {partition_name};")
+        records = cur.fetchall()
+        
+        for record in records:
+            print(record)
+
+    # Close the connection
+    cur.close()
+    connection.close()
+
 def main():
-    if (sys.argv[1] == 'load'):
+    if sys.argv[1] == 'load':
         load_test_data()
+    elif sys.argv[1] == 'worker':
+        check_test_partitions()
     else:
         run_test_query()
     

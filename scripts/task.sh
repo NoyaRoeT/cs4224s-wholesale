@@ -72,15 +72,19 @@ if [ ${REMAINDER} -eq 0 ]; then
 	fi
 
 	signal_db_ready
+fi
+
+wait_db_ready
+
+if [ ${REMAINDER} -eq 0 ]; then
+	source "$HOME/${PGUSER}_venv/bin/activate"
+	python ../python/test.py "worker"
 else
 	source "$HOME/${PGUSER}_venv/bin/activate"
 
-	wait_db_ready
-	
 	echo "Running python script..."
-	python ../python/test.py $HOSTNAME $SLURM_PROCID
+	python ../python/test.py
 
-	echo "Client task $SLURM_PROCID completed"
 	signal_client_done
 fi
 

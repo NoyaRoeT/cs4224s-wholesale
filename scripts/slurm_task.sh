@@ -1,0 +1,96 @@
+#!/usr/bin/env bash
+coordinator_node=$1
+HOSTNAME=$(hostname)
+REMAINDER=$(($SLURM_PROCID % 5))
+SIGNAL_DIR="$HOME/$SLURM_JOB_ID"
+READY_FILE="$SIGNAL_DIR/${HOSTNAME}_ready"
+DONE_FILE="$SIGNAL_DIR/done_$SLURM_PROCID"
+NUM_CLIENTS=20
+CLIENT_TASKS=(1 2 3 4 6 7 8 9 11 12 13 14 16 17 18 19 21 22 23 24)
+
+signal_db_ready() {
+	touch $READY_FILE
+}
+
+clean_up() {
+	rm -rf $HOME/$SLURM_JOB_ID
+}
+
+wait_db_ready() {
+	local all_ready=0
+	while [ $all_ready -eq 0 ]; do
+        local ready_count=0
+        for i in {0..4}; do
+            local node_name="xcne$i"
+            if [ -f "$SIGNAL_DIR/${node_name}_ready" ]; then
+                ready_count=$((ready_count + 1))
+            fi
+        done
+
+        if [ $ready_count -eq 5 ]; then
+            all_ready=1
+        else
+			sleep 1 # Sleep to avoid busy waiting
+		fi
+    done
+}
+
+signal_client_done() {
+	touch $DONE_FILE
+}
+
+wait_clients_done() {
+    local all_done=0
+    while [ $all_done -eq 0 ]; do
+        local done_count=0
+        for client_id in "${CLIENT_TASKS[@]}"; do
+            if [ -f "$SIGNAL_DIR/done_$client_id" ]; then
+                done_count=$((done_count + 1))
+            fi
+        done
+
+        if [ $done_count -eq $NUM_CLIENTS ]; then
+            all_done=1
+        else
+            sleep 1  # Sleep to avoid busy waiting
+        fi
+    done
+}
+
+if [ ${REMAINDER} -eq 0 ]; then
+	mkdir -p $SIGNAL_DIR # prepare for file-based synchronization
+
+	# Start db servers
+	/home/t/$USER/pgsql/bin/pg_ctl -D $PGDATA -l logfile restart
+	
+	if [ "${HOSTNAME}" = "$coordinator_node" ]; then
+		echo "Doing coordinator-only stuff..."
+	fi
+
+	signal_db_ready
+else
+	source "$HOME/${PGUSER}_venv/bin/activate"
+	echo "Activated $VIRTUAL_ENV virtual environment."
+
+	echo "Waiting for db to be ready..."
+	wait_db_ready
+	
+	echo "Running python script..."
+	python ../python/test.py $HOSTNAME $SLURM_PROCID
+
+	echo "Client task $SLURM_PROCID completed"
+	signal_client_done
+fi
+
+if [ ${REMAINDER} -eq 0 ]; then
+	wait_clients_done
+
+	if [ "${HOSTNAME}" = "$coordinator_node" ]; then
+		echo "Performing clean up..."
+		clean_up
+		echo "$(ls "$HOME")"
+	fi
+
+	# stop db servers
+	/home/t/$USER/pgsql/bin/pg_ctl -D $PGDATA stop
+fi

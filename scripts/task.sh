@@ -66,13 +66,14 @@ if [ ${REMAINDER} -eq 0 ]; then
 	$HOME/pgsql/bin/pg_ctl -D $PGDATA -l logfile restart
 	
 	if [ "${HOSTNAME}" = "$coordinator_node" ]; then
-		echo "Doing coordinator-only stuff..."
+		source "$HOME/${PGUSER}_venv/bin/activate"
+		echo "Loading test data..."
+		python ../python/test.py "load"
 	fi
 
 	signal_db_ready
 else
 	source "$HOME/${PGUSER}_venv/bin/activate"
-	echo "Activated $VIRTUAL_ENV virtual environment."
 
 	wait_db_ready
 	

@@ -74,7 +74,6 @@ else
 	source "$HOME/${PGUSER}_venv/bin/activate"
 	echo "Activated $VIRTUAL_ENV virtual environment."
 
-	echo "Waiting for db to be ready..."
 	wait_db_ready
 	
 	echo "Running python script..."
@@ -90,7 +89,6 @@ if [ ${REMAINDER} -eq 0 ]; then
 	if [ "${HOSTNAME}" = "$coordinator_node" ]; then
 		echo "Performing clean up..."
 		clean_up
-		echo "$(ls "$HOME")"
 	fi
 
 	# stop db servers

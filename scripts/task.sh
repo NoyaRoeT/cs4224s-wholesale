@@ -2,9 +2,11 @@
 coordinator_node=$1
 HOSTNAME=$(hostname)
 REMAINDER=$(($SLURM_PROCID % 5))
+
 SIGNAL_DIR="$HOME/$SLURM_JOB_ID"
 READY_FILE="$SIGNAL_DIR/${HOSTNAME}_ready"
 DONE_FILE="$SIGNAL_DIR/done_$SLURM_PROCID"
+
 NUM_CLIENTS=20
 CLIENT_TASKS=(1 2 3 4 6 7 8 9 11 12 13 14 16 17 18 19 21 22 23 24)
 
@@ -61,7 +63,7 @@ if [ ${REMAINDER} -eq 0 ]; then
 	mkdir -p $SIGNAL_DIR # prepare for file-based synchronization
 
 	# Start db servers
-	/home/t/$USER/pgsql/bin/pg_ctl -D $PGDATA -l logfile restart
+	$HOME/pgsql/bin/pg_ctl -D $PGDATA -l logfile restart
 	
 	if [ "${HOSTNAME}" = "$coordinator_node" ]; then
 		echo "Doing coordinator-only stuff..."
@@ -92,5 +94,5 @@ if [ ${REMAINDER} -eq 0 ]; then
 	fi
 
 	# stop db servers
-	/home/t/$USER/pgsql/bin/pg_ctl -D $PGDATA stop
+	$HOME/pgsql/bin/pg_ctl -D $PGDATA stop
 fi

@@ -71,6 +71,12 @@ def run_test_query():
     count = cursor.fetchone()[0]
     print(f"Total number of users: {count}")
 
+    cursor.execute("EXPLAIN ANALYZE SELECT * FROM users;")
+    exec_plan = cursor.fetchall()
+    for row in exec_plan:
+        print(row[0])
+
+
 def main():
     if len(sys.argv) > 1:
         if sys.argv[1] == 'load':

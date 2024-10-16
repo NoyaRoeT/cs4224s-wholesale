@@ -88,11 +88,11 @@ if [ ${REMAINDER} -eq 0 ]; then
 
 	# Start db servers
 	$HOME/pgsql/bin/pg_ctl -D $PGDATA -l logfile restart
-	
 	if [ "${HOSTNAME}" = "$coordinator_node" ]; then
 		source "$HOME/${PGUSER}_venv/bin/activate"
 		echo "Loading test data..."
-		python ../python/test.py "load"
+        python ../python/table_creation.py
+        python ../python/data_ingestion.py --w "../data_files/warehouse.csv" --d "../data_files/district.csv" --c "../data_files/customer.csv" --o "../data_files/order.csv" --i "../data_files/item.csv" --ol "../data_files/order-line.csv" --s "../data_files/stock.csv"
 	fi
 
 	signal_db_ready
@@ -107,7 +107,7 @@ else
 	source "$HOME/${PGUSER}_venv/bin/activate"
 
 	echo "Running python script..."
-	python ../python/test.py
+	# python ../python/test.py
 
 	signal_client_done
 fi

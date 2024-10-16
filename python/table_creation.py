@@ -7,15 +7,14 @@ DB_NAME = 'project'
 DB_USER = 'cs4224s'
 
 def create_tables():
+    connection = psycopg2.connect(
+        host=DB_HOST,
+        port=DB_PORT,
+        dbname=DB_NAME,
+        user=DB_USER,
+    )
+    cursor = connection.cursor()
     try:
-        connection = psycopg2.connect(
-            host=DB_HOST,
-            port=DB_PORT,
-            dbname=DB_NAME,
-            user=DB_USER,
-        )
-        cursor = connection.cursor()
-
 
         # 1. Create warehouse table
         print(f"warehouse table creation starts")
@@ -34,7 +33,10 @@ def create_tables():
         """)
         print(f"warehouse table creation ends")
         print(f"warehouse table distribution starts")
-        cursor.execute("SELECT create_distributed_table('warehouse', 'w_id');")
+        cursor.execute(create_partition_key("warehouse","w_id"))
+        # cursor.execute(check_partition_key("warehouse"))
+        # result = cursor.fetchone()
+        # print(result[0] +" partition key: "+ result[1])
         print(f"warehouse table distribution ends")
 
         # 2. Create district table
@@ -58,7 +60,10 @@ def create_tables():
         """)
         print(f"district table creation ends")
         print(f"district table distribution starts")
-        cursor.execute("SELECT create_distributed_table('warehouse', 'd_w_id');")
+        cursor.execute(create_partition_key("district","d_w_id"))
+        # cursor.execute(check_partition_key("district"))
+        # result = cursor.fetchone()
+        # print(result[0] +" partition key: "+ result[1])
         print(f"district table distribution ends")
 
         # 3. Create customer table
@@ -92,43 +97,54 @@ def create_tables():
         """)
         print(f"customer table creation ends")
         print(f"customer table distribution starts")
-        cursor.execute("SELECT create_distributed_table('customer', 'd_w_id');")
+        cursor.execute(create_partition_key("customer","c_w_id"))
+        # cursor.execute(check_partition_key("customer"))
+        # result = cursor.fetchone()
+        # print(result[0] +" partition key: "+ result[1])
         print(f"customer table distribution ends")
 
         # 4. Create order table
         print(f"order table creation starts")
         cursor.execute("""
-           CREATE TABLE IF NOT EXISTS order (
+           CREATE TABLE IF NOT EXISTS "order" (
                 o_w_id INT,
                 o_d_id INT,
-                o_id INT PRIMARY KEY,
+                o_id INT,
                 o_c_id INT,
-                o_carrier_id INT CHECK (o_carrier_id BETWEEN 1 AND 10),
+                o_carrier_id INT CHECK (o_carrier_id BETWEEN 1 AND 10 OR o_carrier_id IS NULL),
                 o_ol_cnt DECIMAL(2, 0),
                 o_all_local DECIMAL(1, 0),
                 o_entry_d TIMESTAMP,
+                PRIMARY KEY (o_w_id, o_d_id, o_id),
                 FOREIGN KEY (o_w_id, o_d_id, o_c_id) REFERENCES customer (c_w_id, c_d_id, c_id)
             );
         """)
         print(f"order table creation ends")
         print(f"order table distribution starts")
-        cursor.execute("SELECT create_distributed_table('order', 'd_w_id');")
+        cursor.execute(create_partition_key("order","o_w_id"))
+        # cursor.execute(check_partition_key("order"))
+        # result = cursor.fetchone()
+        # print(result[0] +" partition key: "+ result[1])
         print(f"order table distribution ends")
 
         # 5. Create item table
         print(f"item table creation starts")
         cursor.execute("""
            CREATE TABLE IF NOT EXISTS item (
-                i_id INT PRIMARY KEY,
+                i_id INT,
                 i_name VARCHAR(24),
                 i_price DECIMAL(5, 2),
                 i_im_id INT,
-                i_data VARCHAR(50)
+                i_data VARCHAR(50),
+                PRIMARY KEY (i_id)
             );
         """)
         print(f"item table creation ends")
         print(f"item table distribution starts")
-        cursor.execute("SELECT create_distributed_table('item', 'i_id');")
+        cursor.execute(create_partition_key("item","i_id"))
+        # cursor.execute(check_partition_key("item"))
+        # result = cursor.fetchone()
+        # print(result[0] +" partition key: "+ result[1])
         print(f"item table distribution ends")
 
         
@@ -141,19 +157,20 @@ def create_tables():
                 ol_o_id INT,
                 ol_number INT,
                 ol_i_id INT,
-                ol_delivery_d TIMESTAMP,
+                ol_delivery_d TIMESTAMP ,
                 ol_amount DECIMAL(7, 2),
                 ol_supply_w_id INT,
                 ol_quantity DECIMAL(2, 0),
                 ol_dist_info CHAR(24),
-                PRIMARY KEY (ol_w_id, ol_d_id, ol_o_id, ol_number),
-                FOREIGN KEY (ol_w_id, ol_d_id, ol_o_id) REFERENCES orders (o_w_id, o_d_id, o_id),
-                FOREIGN KEY (ol_i_id) REFERENCES item (i_id)
+                PRIMARY KEY (ol_w_id, ol_d_id, ol_o_id, ol_number)
             );
         """)
         print(f"order_line table creation ends")
         print(f"order_line table distribution starts")
-        cursor.execute("SELECT create_distributed_table('order_line', 'ol_i_id');")
+        cursor.execute(create_partition_key("order_line","ol_d_id"))
+        # cursor.execute(check_partition_key("order_line"))
+        # result = cursor.fetchone()
+        # print(result[0] +" partition key: "+ result[1])
         print(f"order_line table distribution ends")
 
         
@@ -178,14 +195,15 @@ def create_tables():
                 s_dist_09 CHAR(24),
                 s_dist_10 CHAR(24),
                 s_data VARCHAR(50),
-                PRIMARY KEY (s_w_id, s_i_id),
-                FOREIGN KEY (s_i_id) REFERENCES item (i_id),
-                FOREIGN KEY (s_w_id) REFERENCES warehouse (w_id)
+                PRIMARY KEY (s_w_id, s_i_id)
             );
         """)
         print(f"stock table creation ends")
         print(f"stock table distribution starts")
-        cursor.execute("SELECT create_distributed_table('stock', 's_i_id');")
+        cursor.execute(create_partition_key("stock","s_i_id"))
+        # cursor.execute(check_partition_key("stock"))
+        # result = cursor.fetchone()
+        # print(result[0] +" partition key: "+ result[1])
         print(f"stock table distribution ends")
 
         # Commit the changes
@@ -201,7 +219,20 @@ def create_tables():
             connection.close()
 
 
+def check_partition_key(table_name):
+    return  f"""
+                SELECT logicalrelid::regclass AS table_name,
+                    attname AS distribution_column
+                FROM pg_dist_partition
+                JOIN pg_attribute ON attnum = partkey AND attrelid = logicalrelid
+                WHERE logicalrelid = '{table_name}'::regclass;
+                """
 
+                
+def create_partition_key(table_name, key_name):
+    return  f"""
+               SELECT create_distributed_table('{table_name}','{key_name}');
+                """
 def main():
     create_tables()
 

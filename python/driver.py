@@ -1,5 +1,5 @@
 import sys
-# import psycopg2
+import psycopg2
 from transactions import get_xact_func
 from client_stat import ClientStat
 

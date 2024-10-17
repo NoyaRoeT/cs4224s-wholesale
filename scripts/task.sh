@@ -100,14 +100,10 @@ fi
 
 wait_db_ready
 
-if [ ${REMAINDER} -eq 0 ]; then
+if [ ${REMAINDER} -ne 0 ]; then
 	source "$HOME/${PGUSER}_venv/bin/activate"
-	python ../python/test.py "worker"
-else
-	source "$HOME/${PGUSER}_venv/bin/activate"
-
-	echo "Running python script..."
-	# python ../python/test.py
+	echo "Running driver program..."
+    python ../python/driver.py $SLURM_PROCID
 
 	signal_client_done
 fi

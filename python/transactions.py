@@ -1,5 +1,6 @@
 def test_query(cursor):
     cursor.execute("SELECT w_id, w_name, w_city, w_state FROM warehouse LIMIT 5;")
+    return cursor.fetchall()
 
 def new_order_xact(c_id, w_id, d_id, items, cursor):
     """
@@ -9,10 +10,7 @@ def new_order_xact(c_id, w_id, d_id, items, cursor):
     m: Number of items
     items: List of items, where each item is a tuple of (OL_I_ID, OL_SUPPLY_W_ID, OL_QUANTITY)
     """
-    print(f"New Order Transaction: C_ID={c_id}, W_ID={w_id}, D_ID={d_id}")
-    for item in items:
-        ol_i_id, ol_supply_w_id, ol_quantity = item
-        print(f"Item - OL_I_ID: {ol_i_id}, OL_SUPPLY_W_ID: {ol_supply_w_id}, OL_QUANTITY: {ol_quantity}")
+    return test_query(cursor)
 
 
 def payment_xact(c_w_id, c_d_id, c_id, payment, cursor):
@@ -22,16 +20,14 @@ def payment_xact(c_w_id, c_d_id, c_id, payment, cursor):
     c_id: Customer ID
     payment: Payment amount
     """
-    print(f"Payment Transaction: C_W_ID={c_w_id}, C_D_ID={c_d_id}, C_ID={c_id}, PAYMENT={payment}")
-
+    return test_query(cursor)
 
 def delivery_xact(w_id, carrier_id, cursor):
     """
     w_id: Warehouse ID
     carrier_id: Carrier ID
     """
-    print(f"Delivery Transaction: W_ID={w_id}, CARRIER_ID={carrier_id}")
-
+    return test_query(cursor)
 
 def order_status_xact(c_w_id, c_d_id, c_id, cursor):
     """
@@ -39,8 +35,7 @@ def order_status_xact(c_w_id, c_d_id, c_id, cursor):
     c_d_id: Customer's District ID
     c_id: Customer ID
     """
-    print(f"Order-Status Transaction: C_W_ID={c_w_id}, C_D_ID={c_d_id}, C_ID={c_id}")
-
+    return test_query(cursor)
 
 def stock_level_xact(w_id, d_id, t, l, cursor):
     """
@@ -49,8 +44,7 @@ def stock_level_xact(w_id, d_id, t, l, cursor):
     t: Threshold
     l: Number of last orders to be examined
     """
-    print(f"Stock-Level Transaction: W_ID={w_id}, D_ID={d_id}, T={t}, L={l}")
-
+    return test_query(cursor)
 
 def popular_item_xact(w_id, d_id, l, cursor):
     """
@@ -58,12 +52,10 @@ def popular_item_xact(w_id, d_id, l, cursor):
     d_id: District ID
     l: Number of last orders to be examined
     """
-    print(f"Popular-Item Transaction: W_ID={w_id}, D_ID={d_id}, L={l}")
-
+    return test_query(cursor)
 
 def top_balance_xact(cursor):
-    print(f"Top-Balance Transaction")
-
+    return test_query(cursor)
 
 def related_customer_xact(c_w_id, c_d_id, c_id, cursor):
     """
@@ -71,8 +63,7 @@ def related_customer_xact(c_w_id, c_d_id, c_id, cursor):
     c_d_id: Customer's District ID
     c_id: Customer ID
     """
-    print(f"Related-Customer Transaction: C_W_ID={c_w_id}, C_D_ID={c_d_id}, C_ID={c_id}")
-
+    return test_query(cursor)
 
 
 xact_dict = {

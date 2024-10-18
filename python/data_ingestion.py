@@ -48,11 +48,11 @@ def load_district_data(csv_file_path,cursor):
         with open(csv_file_path, 'r') as f:
             cursor.copy_expert(copy_sql, f)
 
-        cursor.execute("SELECT * FROM district;")
-        districts = cursor.fetchall()
-        print("districts in the table:")
-        for district in districts:
-            print(district)
+        # cursor.execute("SELECT * FROM district;")
+        # districts = cursor.fetchall()
+        # print("districts in the table:")
+        # for district in districts:
+        #     print(district)
 
         print(f"district data ingestion ends")
     except Exception as e:

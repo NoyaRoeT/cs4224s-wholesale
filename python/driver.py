@@ -17,7 +17,8 @@ def main():
     
     proc_id = int(sys.argv[1])
     file_idx = proc_id - (1 + int(proc_id / 5))
-    file_path = f"../xact_files/{file_idx}.txt"
+    # file_path = f"../xact_files/{file_idx}.txt"
+    file_path = f"../xact_files/test.txt"
     
     # connect to db
     connection = psycopg2.connect(
@@ -27,7 +28,9 @@ def main():
         user=DB_USER,
     )
     cursor = connection.cursor()
-
+    # Enable repartition joins
+    cursor.execute("SET citus.enable_repartition_joins = ON;")
+    
     with open(file_path, 'r') as xact_file:
         while True:
             line = xact_file.readline().strip()
@@ -35,10 +38,10 @@ def main():
                 break
             params = line.split(",")
             results = handle_xact(params, xact_file, cursor)
-            print(results) # output xact results to stdout
+            connection.commit()
     print_client_stats(client_stat)
     
-def handle_xact(params, xact_file, cursor):
+def handle_xact(params,xact_file, cursor):
     xact_key = params[0]
 
     # new order xact
@@ -49,6 +52,7 @@ def handle_xact(params, xact_file, cursor):
             item_line = xact_file.readline().strip()
             item_params = item_line.split(",")
             items.append(item_params)
+            print("processing new order "+str(item_params[0]))
         new_order_func = get_xact_func('N')
         args = params[1:-1]
         args.append(items)

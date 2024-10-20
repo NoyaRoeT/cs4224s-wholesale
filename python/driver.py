@@ -33,10 +33,10 @@ def main():
             if not line:
                 break
             params = line.split(",")
-            handle_xact(params, xact_file, cursor)
+            handle_xact(params, xact_file, cursor, connection)
     print_client_stats(client_stat)
     
-def handle_xact(params,xact_file, cursor):
+def handle_xact(params,xact_file, cursor, conn):
     xact_key = params[0]
 
     # new order xact
@@ -52,13 +52,13 @@ def handle_xact(params,xact_file, cursor):
         args = params[1:-1]
         args.append(items)
         args.append(cursor)
-        return client_stat.record_xact(new_order_func, *args)
+        return client_stat.record_xact(conn, new_order_func, *args)
     
     # rest of xacts
     args = params[1: len(params)]
     args.append(cursor)
     xact_func = get_xact_func(xact_key)
-    return client_stat.record_xact(xact_func, *args)
+    return client_stat.record_xact(conn, xact_func, *args)
 
 # output stats for this client to stderr
 def print_client_stats(client_stat):

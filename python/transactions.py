@@ -132,7 +132,27 @@ def popular_item_xact(w_id, d_id, l, cursor):
     return test_query(cursor)
 
 def top_balance_xact(cursor):
-    return test_query(cursor)
+    top_bal_query = """
+        SELECT CONCAT(C_FIRST, ' ', C_MIDDLE, ' ', C_LAST) as cust_name,
+            C_BALANCE as balance,
+            W_NAME as w_name,
+            D_NAME as d_name
+        FROM customer
+        JOIN district ON C_D_ID = D_ID
+        JOIN warehouse ON C_W_ID = W_ID 
+        ORDER BY C_BALANCE DESC;
+        LIMIT 10
+    """
+    cursor.execute(top_bal_query)
+    results = cursor.fetchall()
+
+    # Print the results
+    print(f"{'Customer Name':<30} {'Balance':<15} {'Warehouse':<20} {'District':<20}")
+    print("=" * 85)  # Print a separator line
+
+    for row in results:
+        cust_name, balance, w_name, d_name = row
+        print(f"{cust_name:<30} {balance:<15} {w_name:<20} {d_name:<20}")
 
 def related_customer_xact(c_w_id, c_d_id, c_id, cursor):
     """

@@ -11,6 +11,8 @@ EXIT_FILE="$SIGNAL_DIR/exit_$HOSTNAME"
 NUM_CLIENTS=20
 CLIENT_TASKS=(1 2 3 4 6 7 8 9 11 12 13 14 16 17 18 19 21 22 23 24)
 
+NODES=($(scontrol show hostnames $SLURM_NODELIST))
+
 signal_db_ready() {
 	touch $READY_FILE
 }
@@ -23,8 +25,7 @@ wait_db_ready() {
 	local all_ready=0
 	while [ $all_ready -eq 0 ]; do
         local ready_count=0
-        for i in {0..4}; do
-            local node_name="xcne$i"
+        for node_name in "${NODES[@]}"; do
             if [ -f "$SIGNAL_DIR/${node_name}_ready" ]; then
                 ready_count=$((ready_count + 1))
             fi
@@ -68,8 +69,7 @@ wait_workers_exit() {
 	local all_exit=0
 	while [ $all_exit -eq 0 ]; do
         local exit_count=0
-        for i in {0..4}; do
-            local node_name="xcne$i"
+        for node_name in "${NODES[@]}"; do
             if [ -f "$SIGNAL_DIR/exit_$node_name" ]; then
                 exit_count=$((exit_count + 1))
             fi

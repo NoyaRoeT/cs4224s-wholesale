@@ -4,7 +4,7 @@
 #SBATCH --ntasks-per-node=1
 #SBATCH --partition=normal
 #SBATCH --nodelist=xcnd*
-#SBATCH --time=120
+#SBATCH --time=180
 #SBATCH --wait
 
 if [ ! -x "$HOME/pgsql/bin/postgres" ]; then

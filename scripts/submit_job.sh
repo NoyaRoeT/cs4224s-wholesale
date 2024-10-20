@@ -3,7 +3,7 @@
 #SBATCH --nodes=5
 #SBATCH --ntasks-per-node=5
 #SBATCH --partition=normal
-#SBATCH --nodelist=xcnd[0-10,12-25,27-47]
+#SBATCH --exclude=xcnc[0-6,8-15,17-28,30-32,34-35,37-39],xcne[0-5],xcnf[0-21],xcng[0-1]  # Exclude all other nodes
 #SBATCH --time=120
 
 coordinator_node=$(scontrol show hostnames | head -n 1)

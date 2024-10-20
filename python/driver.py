@@ -37,8 +37,7 @@ def main():
             if not line:
                 break
             params = line.split(",")
-            results = handle_xact(params, xact_file, cursor)
-            connection.commit()
+            handle_xact(params, xact_file, cursor)
     print_client_stats(client_stat)
     
 def handle_xact(params,xact_file, cursor):

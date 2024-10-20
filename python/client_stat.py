@@ -4,13 +4,29 @@ class ClientStat:
     def __init__(self):
         self.exec_times = []
 
-    def record_xact(self, xact_func, *args):
+    def record_xact(self, conn, xact_func, *args, max_retries = 3):
+        retry_count = 0
+        back_off_time = 1
+
         start_time = time.time()
-        result = xact_func(*args)
+        while retry_count != max_retries:
+            try:
+                xact_func(*args)
+                conn.commit()
+                break
+            except Exception as e:
+                conn.rollback()
+                retry_count += 1
+
+                if retry_count == max_retries:
+                    print("Max retries reached, transaction failed")
+                    break
+
+                time.sleep(back_off_time * (2 ** (retry_count - 1)))
 
         exec_time = time.time() - start_time
         self.exec_times.append(exec_time)
-        return result
+
     
     def get_num_xacts(self):
         return len(self.exec_times)

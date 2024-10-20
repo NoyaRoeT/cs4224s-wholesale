@@ -1,7 +1,7 @@
 import psycopg2
 import sys
 # Currently hard-coded, only works on team account because of DB_USER
-DB_HOST = 'xcne0'
+DB_HOST = 'localhost'
 DB_PORT = '5115'
 DB_NAME = 'project'
 DB_USER = 'cs4224s'

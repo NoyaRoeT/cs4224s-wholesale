@@ -5,17 +5,15 @@ from client_stat import ClientStat
 
 client_stat = ClientStat()
 
-DB_HOST = 'xcne0'
+DB_HOST = 'localhost'
 DB_PORT = '5115'
 DB_NAME = 'project'
 DB_USER = 'cs4224s'
 
 def main():
-    # Get slurm process id to determine xact file to read
-    if (len(sys.argv) < 2):
-        return
-    
-    proc_id = int(sys.argv[1])
+    global DB_HOST
+    coordinator_node = sys.argv[1]
+    proc_id = int(sys.argv[2])
     file_idx = proc_id - (1 + int(proc_id / 5))
     # file_path = f"../xact_files/{file_idx}.txt"
     file_path = f"../xact_files/test.txt"

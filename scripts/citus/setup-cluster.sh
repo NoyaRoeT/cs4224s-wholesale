@@ -23,7 +23,7 @@ sleep 10
 
 # Steps to execute on coordinator node
 if [ ${REMAINDER} -eq 0 ] && [ "${HOSTNAME}" = "$coordinator_node" ]; then
-    psql -c "SELECT * FROM citus_set_coordinator_host($coordinator_node, $PGPORT);"
+    psql -c "SELECT * FROM citus_set_coordinator_host('$coordinator_node', $PGPORT);"
     for HOSTNAME in "${HOSTNAMES[@]}"; do
         psql -c "SELECT * FROM citus_add_node('$HOSTNAME', $PGPORT);"
     done

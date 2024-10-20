@@ -1,11 +1,4 @@
 #!/usr/bin/env bash
-#SBATCH --job-name=citus
-#SBATCH --nodes=1
-#SBATCH --ntasks-per-node=1
-#SBATCH --partition=normal
-#SBATCH --exclude=xcnc[0-6,8-15,17-28,30-32,34-35,37-39],xcne[0-5],xcnf[0-21],xcng[0-1]  # Exclude all other nodes
-#SBATCH --time=180
-#SBATCH --wait
 
 if [ ! -x "$HOME/pgsql/bin/postgres" ]; then
     echo "Running install-citus.sh on $(hostname)..."

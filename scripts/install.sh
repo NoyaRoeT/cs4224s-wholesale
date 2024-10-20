@@ -3,7 +3,7 @@
 #SBATCH --nodes=1
 #SBATCH --ntasks-per-node=1
 #SBATCH --partition=normal
-#SBATCH --nodelist=xcnd*
+#SBATCH --nodelist=xcnd[0-10,12-25,27-47]
 #SBATCH --time=180
 #SBATCH --wait
 

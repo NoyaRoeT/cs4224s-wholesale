@@ -11,9 +11,7 @@ DB_NAME = 'project'
 DB_USER = 'cs4224s'
 
 def main():
-    global DB_HOST
-    coordinator_node = sys.argv[1]
-    proc_id = int(sys.argv[2])
+    proc_id = int(sys.argv[1])
     file_idx = proc_id - (1 + int(proc_id / 5))
     # file_path = f"../xact_files/{file_idx}.txt"
     file_path = f"../xact_files/test.txt"

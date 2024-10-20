@@ -10,7 +10,10 @@ if [ ${REMAINDER} -eq 0 ]; then
     $HOME/pgsql/bin/pg_ctl -D $PGDATA -l logfile start
     createdb
     psql -p $PGPORT -c "CREATE EXTENSION citus;"
-    HOSTNAMES+=("$HOSTNAME")
+
+    if [ "${HOSTNAME}" != "$coordinator_node" ]; then
+        HOSTNAMES+=("$HOSTNAME")
+    fi
     
 else
     true

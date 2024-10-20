@@ -24,6 +24,8 @@ if [ ${REMAINDER} -eq 0 ] && [ "${HOSTNAME}" = "$coordinator_node" ]; then
             psql -c "SELECT * FROM citus_add_node('$node', $PGPORT);"
         fi
     done
+
+    psql -c "SELECT * FROM citus_get_active_worker_nodes();"
 fi
 
 sleep 10

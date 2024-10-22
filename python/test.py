@@ -1,10 +1,10 @@
 import psycopg2
 import sys
-# Currently hard-coded, only works on team account because of DB_USER
+
 DB_HOST = 'localhost'
-DB_PORT = '5115'
-DB_NAME = 'project'
-DB_USER = 'cs4224s'
+DB_PORT = os.getenv('PGPORT', '5115')
+DB_NAME = os.getenv('PGDATABASE', 'project')
+DB_USER = os.getenv('PGUSER', 'cs4224s')
 
 def load_test_data():
     try:

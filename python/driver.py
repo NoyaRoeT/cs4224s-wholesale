@@ -1,4 +1,5 @@
 import sys
+import os
 import psycopg2
 from transactions import get_xact_func
 from client_stat import ClientStat
@@ -6,9 +7,9 @@ from client_stat import ClientStat
 client_stat = ClientStat()
 
 DB_HOST = 'localhost'
-DB_PORT = '5115'
-DB_NAME = 'project'
-DB_USER = 'cs4224s'
+DB_PORT = os.getenv('PGPORT', '5115')
+DB_NAME = os.getenv('PGDATABASE', 'project')
+DB_USER = os.getenv('PGUSER', 'cs4224s')
 
 def main():
     proc_id = int(sys.argv[1])

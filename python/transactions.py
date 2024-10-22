@@ -13,83 +13,81 @@ def new_order_xact(c_id, w_id, d_id, items, cursor):
     m: Number of items
     items: List of items, where each item is a tuple of (OL_I_ID, OL_SUPPLY_W_ID, OL_QUANTITY)
     """
-    # cursor.execute("""
-    #         SELECT D_NEXT_O_ID FROM district 
-    #         WHERE D_W_ID = %s AND D_ID = %s FOR UPDATE;
-    #     """, (w_id, d_id))
+    cursor.execute("""
+            SELECT D_NEXT_O_ID FROM district 
+            WHERE D_W_ID = %s AND D_ID = %s FOR UPDATE;
+        """, (w_id, d_id))
     
-    # # get D_NEXT_O_ID
-    # o_id = cursor.fetchone()[0]
+    # get D_NEXT_O_ID
+    o_id = cursor.fetchone()[0]
 
-    # # increase D_NEXT_O_ID by 1
-    # cursor.execute("""
-    # UPDATE district SET D_NEXT_O_ID = D_NEXT_O_ID + 1 
-    # WHERE D_W_ID = %s AND D_ID = %s;
-    #         """, (w_id, d_id))
+    # increase D_NEXT_O_ID by 1
+    cursor.execute("""
+    UPDATE district SET D_NEXT_O_ID = D_NEXT_O_ID + 1 
+    WHERE D_W_ID = %s AND D_ID = %s;
+            """, (w_id, d_id))
     
-    # # Start by assuming all items are local
-    # all_local = 1
-    # total_amount = 0
-    # # Process each item
-    # for i in range(len(items)):
-    #     item_number = items[i][0]
-    #     supplier_warehouse = items[i][1]
-    #     quantity =Decimal(items[i][2])
+    # Start by assuming all items are local
+    all_local = 1
+    total_amount = 0
+    # Process each item
+    for i in range(len(items)):
+        item_number = items[i][0]
+        supplier_warehouse = items[i][1]
+        quantity =Decimal(items[i][2])
 
-    #     # If any item is from a remote warehouse, set all_local to 0
-    #     if supplier_warehouse != w_id:
-    #         all_local = 0
+        # If any item is from a remote warehouse, set all_local to 0
+        if supplier_warehouse != w_id:
+            all_local = 0
 
-    #     cursor.execute("""
-    #         SELECT I_PRICE, S_QUANTITY, S_YTD, S_ORDER_CNT, S_REMOTE_CNT 
-    #         FROM item, stock 
-    #         WHERE I_ID = %s AND S_W_ID = %s AND S_I_ID = I_ID;
-    #         """, (item_number, supplier_warehouse))
+        cursor.execute("""
+            SELECT I_PRICE, S_QUANTITY, S_YTD, S_ORDER_CNT, S_REMOTE_CNT 
+            FROM item, stock 
+            WHERE I_ID = %s AND S_W_ID = %s AND S_I_ID = I_ID;
+            """, (item_number, supplier_warehouse))
         
-    #     item_info = cursor.fetchone()
-    #     # Let S_QUANTITY denote the stock quantity for item ITEM_NUMBER[i] and warehouse SUPPLIER_WAREHOUSE[i]
-    #     i_price, s_quantity, s_ytd, s_order_cnt, s_remote_cnt = item_info
-    #     adjusted_qty = s_quantity - quantity
-    #     if adjusted_qty < 10:
-    #         adjusted_qty += 100
+        item_info = cursor.fetchone()
+        # Let S_QUANTITY denote the stock quantity for item ITEM_NUMBER[i] and warehouse SUPPLIER_WAREHOUSE[i]
+        i_price, s_quantity, s_ytd, s_order_cnt, s_remote_cnt = item_info
+        adjusted_qty = s_quantity - quantity
+        if adjusted_qty < 10:
+            adjusted_qty += 100
 
-    #     # Update stock with new quantity, increment counters
-    #     cursor.execute("""
-    #         UPDATE stock 
-    #         SET S_QUANTITY = %s, S_YTD = S_YTD + %s, S_ORDER_CNT = S_ORDER_CNT + 1, S_REMOTE_CNT = S_REMOTE_CNT + %s
-    #         WHERE S_W_ID = %s AND S_I_ID = %s;
-    #         """, (adjusted_qty, quantity, supplier_warehouse, item_number,1 if supplier_warehouse != w_id else 0 ))
+        # Update stock with new quantity, increment counters
+        cursor.execute("""
+            UPDATE stock 
+            SET S_QUANTITY = %s, S_YTD = S_YTD + %s, S_ORDER_CNT = S_ORDER_CNT + 1, S_REMOTE_CNT = S_REMOTE_CNT + %s
+            WHERE S_W_ID = %s AND S_I_ID = %s;
+            """, (adjusted_qty, quantity, supplier_warehouse, item_number,1 if supplier_warehouse != w_id else 0 ))
         
-    #     # Calculate the amount for this order line
-    #     item_amount = quantity * i_price
-    #     total_amount += item_amount
+        # Calculate the amount for this order line
+        item_amount = quantity * i_price
+        total_amount += item_amount
 
-    #     # Insert into order-line
-    #     cursor.execute("""
-    #         INSERT INTO order_line (OL_O_ID, OL_D_ID, OL_W_ID, OL_NUMBER, OL_I_ID, OL_SUPPLY_W_ID, OL_QUANTITY, OL_AMOUNT, OL_DELIVERY_D,OL_DIST_INFO)
-    #         VALUES (%s, %s, %s, %s, %s, %s, %s, %s, NULL,'S_DIST_'||%s);
-    #     """, (o_id, d_id, w_id, i+1, item_number, supplier_warehouse, quantity, item_amount,w_id))
+        # Insert into order-line
+        cursor.execute("""
+            INSERT INTO order_line (OL_O_ID, OL_D_ID, OL_W_ID, OL_NUMBER, OL_I_ID, OL_SUPPLY_W_ID, OL_QUANTITY, OL_AMOUNT, OL_DELIVERY_D,OL_DIST_INFO)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, NULL,'S_DIST_'||%s);
+        """, (o_id, d_id, w_id, i+1, item_number, supplier_warehouse, quantity, item_amount,w_id))
 
-    #     # items[i]+=(adjusted_qty,)
-    # cursor.execute("""
-    #     SELECT C_DISCOUNT, W_TAX, D_TAX
-    #     FROM customer, warehouse, district
-    #     WHERE C_W_ID = %s AND C_D_ID = %s AND C_ID = %s
-    #     AND W_ID = %s AND D_W_ID = W_ID AND D_ID = %s;
-    # """, (w_id, d_id, c_id, w_id, d_id))
+        # items[i]+=(adjusted_qty,)
+    cursor.execute("""
+        SELECT C_DISCOUNT, W_TAX, D_TAX
+        FROM customer, warehouse, district
+        WHERE C_W_ID = %s AND C_D_ID = %s AND C_ID = %s
+        AND W_ID = %s AND D_W_ID = W_ID AND D_ID = %s;
+    """, (w_id, d_id, c_id, w_id, d_id))
 
-    # customer_info = cursor.fetchone()
-    # c_discount, w_tax, d_tax = customer_info
-    # total_amount = total_amount * (1 + w_tax + d_tax) * (1 - c_discount)    
-    # # Insert the order
-    # cursor.execute("""
-    #     INSERT INTO "order" (O_ID, O_D_ID, O_W_ID, O_C_ID, O_ENTRY_D, O_OL_CNT, O_ALL_LOCAL)
-    #     VALUES (%s, %s, %s, %s, CURRENT_TIMESTAMP, %s, %s);
-    # """, (o_id, d_id, w_id, c_id, len(items), all_local))
+    customer_info = cursor.fetchone()
+    c_discount, w_tax, d_tax = customer_info
+    total_amount = total_amount * (1 + w_tax + d_tax) * (1 - c_discount)    
+    # Insert the order
+    cursor.execute("""
+        INSERT INTO "order" (O_ID, O_D_ID, O_W_ID, O_C_ID, O_ENTRY_D, O_OL_CNT, O_ALL_LOCAL)
+        VALUES (%s, %s, %s, %s, CURRENT_TIMESTAMP, %s, %s);
+    """, (o_id, d_id, w_id, c_id, len(items), all_local))
 
-    # test_new_order_xact(c_id, w_id, d_id,o_id, items, cursor)
-    return test_query(cursor)
-
+    test_new_order_xact(c_id, w_id, d_id,o_id, items, cursor)
 
 def payment_xact(c_w_id, c_d_id, c_id, payment, cursor):
     """

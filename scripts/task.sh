@@ -124,7 +124,7 @@ fi
 if [ ${REMAINDER} -eq 0 ]; then
 	if [ "${HOSTNAME}" = "$coordinator_node" ]; then
         wait_clients_done
-        # Run output scripts
+        python ../python/output_stats.py
         signal_output_done
 
         signal_worker_exit

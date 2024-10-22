@@ -37,7 +37,7 @@ def main():
             params = line.split(",")
             handle_xact(params, xact_file, cursor, connection)
     print_client_stats(client_stat)
-    # write_client_stats(client_stat, file_idx)
+    write_client_stats(client_stat, file_idx)
     
 def handle_xact(params,xact_file, cursor, conn):
     xact_key = params[0]
@@ -73,21 +73,20 @@ def print_client_stats(client_stat):
     print(f"95th percentile transaction latency (ms): {client_stat.get_p95_xact_latency():.2f}", file=sys.stderr)
     print(f"99th percentile transaction latency (ms): {client_stat.get_p99_xact_latency():.2f}", file=sys.stderr)
         
-# def write_client_stats(client_stat, client_number):
-#     # Need to create output directory in task.sh
-#     output_file_path = f"../output/{client_number}.csv"
-#     output_row = [
-#         client_stat.get_num_xacts(),
-#         client_stat.get_total_exec_time(),
-#         client_stat.get_throughput(),
-#         client_stat.get_avg_xact_latency(),
-#         client_stat.get_median_xact_latency(),
-#         client_stat.get_p95_xact_latency(),
-#         client_stat.get_p99_xact_latency()
-#     ]
-#     with open(output_file_path, mode='w', newline='') as file:
-#         csv_writer = csv.writer(file)
-#         csv_writer.writerows([output_row])  # Write the data
+def write_client_stats(client_stat, client_number):
+    output_file_path = f"../output/{client_number}.csv"
+    output_row = [
+        client_stat.get_num_xacts(),
+        client_stat.get_total_exec_time(),
+        client_stat.get_throughput(),
+        client_stat.get_avg_xact_latency(),
+        client_stat.get_median_xact_latency(),
+        client_stat.get_p95_xact_latency(),
+        client_stat.get_p99_xact_latency()
+    ]
+    with open(output_file_path, mode='w', newline='') as file:
+        csv_writer = csv.writer(file)
+        csv_writer.writerows([output_row])
 
 if __name__ == "__main__":
     main()

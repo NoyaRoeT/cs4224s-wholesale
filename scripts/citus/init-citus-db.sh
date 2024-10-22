@@ -7,7 +7,6 @@ INSTALLDIR=$HOME/pgsql
 
 TEAM_ID=s # IMPORTANT: change x to your actual team identifier (a/b/.../y/z) 
 TEAM_ASCII=$(echo -n "${TEAM_ID}" | od -An -tuC)
-PORT_NUM=$(( 5000+${TEAM_ASCII} ))
 
 # DATADIR - directory containing database files
 DATADIR=/tmp/team${TEAM_ID}-data
@@ -20,7 +19,7 @@ if [ -e ${DATADIR}/postgresql.conf ]; then
 	if [ $? -ne 0 ]; then
 		echo "shared_preload_libraries = 'citus'" >> ${DATADIR}/postgresql.conf
 		echo "listen_addresses = '*'" >> ${DATADIR}/postgresql.conf
-		echo "port = ${PORT_NUM}" >> ${DATADIR}/postgresql.conf
+		echo "port = ${PGPORT}" >> ${DATADIR}/postgresql.conf
 		echo "max_wal_size = 5GB" >> ${DATADIR}/postgresql.conf
 	fi
 else

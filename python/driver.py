@@ -77,13 +77,13 @@ def write_client_stats(client_stat, client_number):
     output_file_path = f"../output/{client_number}.csv"
     output_row = [
         client_number,
-        client_stat.get_num_xacts(),
-        client_stat.get_total_exec_time(),
-        client_stat.get_throughput(),
-        client_stat.get_avg_xact_latency(),
-        client_stat.get_median_xact_latency(),
-        client_stat.get_p95_xact_latency(),
-        client_stat.get_p99_xact_latency()
+        round(client_stat.get_num_xacts(), 2),
+        round(client_stat.get_total_exec_time(), 2),
+        round(client_stat.get_throughput(), 2),
+        round(client_stat.get_avg_xact_latency(), 2),
+        round(client_stat.get_median_xact_latency(), 2),
+        round(client_stat.get_p95_xact_latency(), 2),
+        round(client_stat.get_p99_xact_latency(), 2)
     ]
     with open(output_file_path, mode='w', newline='') as file:
         csv_writer = csv.writer(file)

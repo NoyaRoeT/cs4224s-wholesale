@@ -14,9 +14,9 @@ def main():
     
     throughputs = [float(row[3]) for row in rows]
     
-    max_throughput = max(throughputs)
-    min_throughput = min(throughputs)
-    avg_throughput = sum(throughputs) / len(throughputs)
+    max_throughput = round(max(throughputs), 2)
+    min_throughput = round(min(throughputs), 2)
+    avg_throughput = round(sum(throughputs) / len(throughputs), 2)
 
     clients_file_path = f'{OUTPUT_PATH}/clients.csv'
     sorted_rows = sorted(rows, key=lambda row: row[0])

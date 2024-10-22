@@ -63,6 +63,28 @@ wait_clients_done() {
     done
 }
 
+signal_worker_exit() {
+	touch $EXIT_FILE
+}
+
+wait_workers_exit() {
+	local all_exit=0
+	while [ $all_exit -eq 0 ]; do
+        local exit_count=0
+        for node_name in "${NODES[@]}"; do
+            if [ -f "$SIGNAL_DIR/exit_$node_name" ]; then
+                exit_count=$((exit_count + 1))
+            fi
+        done
+
+        if [ $exit_count -eq 5 ]; then
+            all_exit=1
+        else
+			sleep 1 # Sleep to avoid busy waiting
+		fi
+    done
+}
+
 signal_output_done() {
     touch "$SIGNAL_DIR/OUTPUT"
 }
@@ -105,10 +127,12 @@ if [ ${REMAINDER} -eq 0 ]; then
         # Run output scripts
         signal_output_done
 
+        wait_workers_exit
 		echo "Performing clean up..."
 		clean_up
     else
         wait_output_done
+        signal_worker_exit
 	fi
 	# stop db servers
 	$HOME/pgsql/bin/pg_ctl -D $PGDATA stop

@@ -76,6 +76,7 @@ def print_client_stats(client_stat):
 def write_client_stats(client_stat, client_number):
     output_file_path = f"../output/{client_number}.csv"
     output_row = [
+        client_number,
         client_stat.get_num_xacts(),
         client_stat.get_total_exec_time(),
         client_stat.get_throughput(),

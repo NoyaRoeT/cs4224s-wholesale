@@ -127,7 +127,9 @@ if [ ${REMAINDER} -eq 0 ]; then
         # Run output scripts
         signal_output_done
 
+        signal_worker_exit
         wait_workers_exit
+
 		echo "Performing clean up..."
 		clean_up
     else

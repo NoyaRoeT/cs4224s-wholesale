@@ -19,7 +19,7 @@ def main():
     avg_throughput = round(sum(throughputs) / len(throughputs), 2)
 
     clients_file_path = f'{OUTPUT_PATH}/clients.csv'
-    sorted_rows = sorted(rows, key=lambda row: row[0])
+    sorted_rows = sorted(rows, key=lambda row: int(row[0]))
     with open(clients_file_path, mode='w', newline='') as file:
         csv_writer = csv.writer(file)
         csv_writer.writerows(sorted_rows)  # Write the data

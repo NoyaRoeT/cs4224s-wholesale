@@ -95,23 +95,35 @@ wait_output_done() {
     done
 }
 
+signal_data_ready() {
+    touch "$SIGNAL_DIR/DATA_READY"
+}
+
+wait_data_ready() {
+    while [ ! -f "$SIGNAL_DIR/DATA_READY" ]; do
+        sleep 1
+    done
+}
+
 if [ ${REMAINDER} -eq 0 ]; then
 	mkdir -p $SIGNAL_DIR # prepare for file-based synchronization
     mkdir -p $OUTPUT_DIR # prepare output dir if it doesn't exist
 
 	# Start db servers
 	$HOME/pgsql/bin/pg_ctl -D $PGDATA -l logfile restart
+    signal_db_ready
+
 	if [ "${HOSTNAME}" = "$coordinator_node" ]; then
+        wait_db_ready
 		source "$HOME/${PGUSER}_venv/bin/activate"
 		echo "Loading data"
         python ../python/table_creation.py
         python ../python/data_ingestion.py --w "../data_files/warehouse.csv" --d "../data_files/district.csv" --c "../data_files/customer.csv" --o "../data_files/order.csv" --i "../data_files/item.csv" --ol "../data_files/order-line.csv" --s "../data_files/stock.csv"
-	fi
-
-	signal_db_ready
+        signal_data_ready
+    fi
 fi
 
-wait_db_ready
+wait_data_ready
 
 if [ ${REMAINDER} -ne 0 ]; then
 	source "$HOME/${PGUSER}_venv/bin/activate"

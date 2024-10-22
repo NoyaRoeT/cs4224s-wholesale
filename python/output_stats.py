@@ -25,7 +25,7 @@ def main():
         csv_writer.writerows(sorted_rows)  # Write the data
 
 
-    throughput_file_path = '{OUTPUT_PATH}/throughput.csv'
+    throughput_file_path = f'{OUTPUT_PATH}/throughput.csv'
     with open(throughput_file_path, mode='w', newline='') as file:
         csv_writer = csv.writer(file)
         csv_writer.writerows([[min_throughput, max_throughput, avg_throughput]])  # Write the data

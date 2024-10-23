@@ -1,4 +1,4 @@
-from transactions_output import test_new_order_xact
+from transactions_output import new_order_xact_output,payment_xact_output
 from decimal import Decimal
 def test_query(cursor):
     cursor.execute("SELECT w_id, w_name, w_city, w_state FROM warehouse LIMIT 5;")
@@ -87,7 +87,7 @@ def new_order_xact(c_id, w_id, d_id, items, cursor):
         VALUES (%s, %s, %s, %s, CURRENT_TIMESTAMP, %s, %s);
     """, (o_id, d_id, w_id, c_id, len(items), all_local))
 
-    test_new_order_xact(c_id, w_id, d_id,o_id, items, cursor)
+    new_order_xact_output(c_id, w_id, d_id,o_id, items, cursor)
 
 
 def payment_xact(c_w_id, c_d_id, c_id, payment, cursor):
@@ -97,7 +97,26 @@ def payment_xact(c_w_id, c_d_id, c_id, payment, cursor):
     c_id: Customer ID
     payment: Payment amount
     """
-    return test_query(cursor)
+    cursor.execute("""
+        UPDATE warehouse
+        SET W_YTD = W_YTD + %s
+        WHERE W_ID = %s;
+        """, (payment, c_w_id))
+    
+    cursor.execute("""
+        UPDATE district
+        SET D_YTD = D_YTD + %s
+        WHERE D_W_ID = %s AND D_ID = %s;
+        """, (payment, c_w_id, c_d_id))
+    
+    cursor.execute("""
+        UPDATE customer
+        SET C_BALANCE = C_BALANCE - %s,
+            C_YTD_PAYMENT = C_YTD_PAYMENT + %s,
+            C_PAYMENT_CNT = C_PAYMENT_CNT + 1
+        WHERE C_W_ID = %s AND C_D_ID = %s AND C_ID = %s;
+        """, (payment, payment, c_w_id, c_d_id, c_id))
+    payment_xact_output(c_w_id, c_d_id, c_id, payment, cursor)
 
 def delivery_xact(w_id, carrier_id, cursor):
     """

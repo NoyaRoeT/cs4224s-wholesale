@@ -8,6 +8,8 @@ READY_FILE="$SIGNAL_DIR/${HOSTNAME}_ready"
 DONE_FILE="$SIGNAL_DIR/done_$SLURM_PROCID"
 EXIT_FILE="$SIGNAL_DIR/exit_$HOSTNAME"
 
+OUTPUT_DIR="../output"
+
 NUM_CLIENTS=20
 CLIENT_TASKS=(1 2 3 4 6 7 8 9 11 12 13 14 16 17 18 19 21 22 23 24)
 
@@ -34,7 +36,7 @@ wait_db_ready() {
         if [ $ready_count -eq 5 ]; then
             all_ready=1
         else
-			sleep 1 # Sleep to avoid busy waiting
+			sleep 1
 		fi
     done
 }
@@ -56,7 +58,7 @@ wait_clients_done() {
         if [ $done_count -eq $NUM_CLIENTS ]; then
             all_done=1
         else
-            sleep 1  # Sleep to avoid busy waiting
+            sleep 1
         fi
     done
 }
@@ -83,22 +85,45 @@ wait_workers_exit() {
     done
 }
 
+signal_output_done() {
+    touch "$SIGNAL_DIR/OUTPUT"
+}
+
+wait_output_done() {
+    while [ ! -f "$SIGNAL_DIR/OUTPUT" ]; do
+        sleep 1
+    done
+}
+
+signal_data_ready() {
+    touch "$SIGNAL_DIR/DATA_READY"
+}
+
+wait_data_ready() {
+    while [ ! -f "$SIGNAL_DIR/DATA_READY" ]; do
+        sleep 1
+    done
+}
+
 if [ ${REMAINDER} -eq 0 ]; then
 	mkdir -p $SIGNAL_DIR # prepare for file-based synchronization
+    mkdir -p $OUTPUT_DIR # prepare output dir if it doesn't exist
 
 	# Start db servers
 	$HOME/pgsql/bin/pg_ctl -D $PGDATA -l logfile restart
+    signal_db_ready
+
 	if [ "${HOSTNAME}" = "$coordinator_node" ]; then
+        wait_db_ready
 		source "$HOME/${PGUSER}_venv/bin/activate"
-		echo "Loading test data..."
+		echo "Loading data"
         python ../python/table_creation.py
         python ../python/data_ingestion.py --w "../data_files/warehouse.csv" --d "../data_files/district.csv" --c "../data_files/customer.csv" --o "../data_files/order.csv" --i "../data_files/item.csv" --ol "../data_files/order-line.csv" --s "../data_files/stock.csv"
-	fi
-
-	signal_db_ready
+        signal_data_ready
+    fi
 fi
 
-wait_db_ready
+wait_data_ready
 
 if [ ${REMAINDER} -ne 0 ]; then
 	source "$HOME/${PGUSER}_venv/bin/activate"
@@ -109,14 +134,21 @@ if [ ${REMAINDER} -ne 0 ]; then
 fi
 
 if [ ${REMAINDER} -eq 0 ]; then
-	wait_clients_done
-	signal_worker_exit
 	if [ "${HOSTNAME}" = "$coordinator_node" ]; then
-		wait_workers_exit
+        wait_clients_done
+        python ../python/output_stats.py
+        python ../python/end_state.py
+        signal_output_done
+
+        signal_worker_exit
+        wait_workers_exit
+
 		echo "Performing clean up..."
 		clean_up
+    else
+        wait_output_done
+        signal_worker_exit
 	fi
-
 	# stop db servers
 	$HOME/pgsql/bin/pg_ctl -D $PGDATA stop
 fi

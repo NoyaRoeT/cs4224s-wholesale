@@ -89,7 +89,6 @@ def new_order_xact(c_id, w_id, d_id, items, cursor):
 
     new_order_xact_output(c_id, w_id, d_id,o_id, items, cursor)
 
-
 def payment_xact(c_w_id, c_d_id, c_id, payment, cursor):
     """
     c_w_id: Customer's Warehouse ID

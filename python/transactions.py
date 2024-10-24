@@ -158,8 +158,8 @@ def top_balance_xact(cursor):
         FROM customer
         JOIN district ON C_D_ID = D_ID
         JOIN warehouse ON C_W_ID = W_ID 
-        ORDER BY C_BALANCE DESC;
-        LIMIT 10
+        ORDER BY C_BALANCE DESC
+        LIMIT 10;
     """
     cursor.execute(top_bal_query)
     results = cursor.fetchall()

@@ -157,6 +157,7 @@ def top_balance_xact(cursor):
             D_NAME as d_name
         FROM customer
         JOIN district ON C_D_ID = D_ID AND C_W_ID = D_W_ID
+        JOIN warehouse on D_W_ID = W_ID
         ORDER BY C_BALANCE DESC
         LIMIT 10;
     """
@@ -170,6 +171,7 @@ def top_balance_xact(cursor):
     for row in results:
         cust_name, balance, w_name, d_name = row
         print(f"{cust_name:<30} {balance:<15} {w_name:<20} {d_name:<20}")
+    print()
 
 def related_customer_xact(c_w_id, c_d_id, c_id, cursor):
     """

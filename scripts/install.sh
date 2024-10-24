@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+
 if [ ! -x "$HOME/pgsql/bin/postgres" ]; then
     echo "Running install-citus.sh on $(hostname)..."
     bash ./citus/install-citus.sh

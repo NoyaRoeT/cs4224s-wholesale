@@ -1,11 +1,11 @@
 import psycopg2
-import sys
+import os
 import argparse
-# Currently hard-coded, only works on team account because of DB_USER
-DB_HOST = 'xcne0'
-DB_PORT = '5115'
-DB_NAME = 'project'
-DB_USER = 'cs4224s'
+
+DB_HOST = 'localhost'
+DB_PORT = os.getenv('PGPORT', '5115')
+DB_NAME = os.getenv('PGDATABASE', 'project')
+DB_USER = os.getenv('PGUSER', 'cs4224s')
 
 
 def load_warehouse_data(csv_file_path,cursor):

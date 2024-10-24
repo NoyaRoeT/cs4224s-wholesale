@@ -1,20 +1,18 @@
 import sys
+import os
+import csv
 import psycopg2
 from transactions import get_xact_func
 from client_stat import ClientStat
 
 client_stat = ClientStat()
 
-DB_HOST = 'xcne0'
-DB_PORT = '5115'
-DB_NAME = 'project'
-DB_USER = 'cs4224s'
+DB_HOST = 'localhost'
+DB_PORT = os.getenv('PGPORT', '5115')
+DB_NAME = os.getenv('PGDATABASE', 'project')
+DB_USER = os.getenv('PGUSER', 'cs4224s')
 
 def main():
-    # Get slurm process id to determine xact file to read
-    if (len(sys.argv) < 2):
-        return
-    
     proc_id = int(sys.argv[1])
     file_idx = proc_id - (1 + int(proc_id / 5))
     # file_path = f"../xact_files/{file_idx}.txt"
@@ -37,10 +35,11 @@ def main():
             if not line:
                 break
             params = line.split(",")
-            handle_xact(params, xact_file, cursor)
+            handle_xact(params, xact_file, cursor, connection)
     print_client_stats(client_stat)
+    write_client_stats(client_stat, file_idx)
     
-def handle_xact(params,xact_file, cursor):
+def handle_xact(params,xact_file, cursor, conn):
     xact_key = params[0]
 
     # new order xact
@@ -56,13 +55,13 @@ def handle_xact(params,xact_file, cursor):
         args = params[1:-1]
         args.append(items)
         args.append(cursor)
-        return client_stat.record_xact(new_order_func, *args)
+        return client_stat.record_xact(conn, new_order_func, *args)
     
     # rest of xacts
     args = params[1: len(params)]
     args.append(cursor)
     xact_func = get_xact_func(xact_key)
-    return client_stat.record_xact(xact_func, *args)
+    return client_stat.record_xact(conn, xact_func, *args)
 
 # output stats for this client to stderr
 def print_client_stats(client_stat):
@@ -74,7 +73,21 @@ def print_client_stats(client_stat):
     print(f"95th percentile transaction latency (ms): {client_stat.get_p95_xact_latency():.2f}", file=sys.stderr)
     print(f"99th percentile transaction latency (ms): {client_stat.get_p99_xact_latency():.2f}", file=sys.stderr)
         
-
+def write_client_stats(client_stat, client_number):
+    output_file_path = f"../output/{client_number}.csv"
+    output_row = [
+        client_number,
+        round(client_stat.get_num_xacts(), 2),
+        round(client_stat.get_total_exec_time(), 2),
+        round(client_stat.get_throughput(), 2),
+        round(client_stat.get_avg_xact_latency(), 2),
+        round(client_stat.get_median_xact_latency(), 2),
+        round(client_stat.get_p95_xact_latency(), 2),
+        round(client_stat.get_p99_xact_latency(), 2)
+    ]
+    with open(output_file_path, mode='w', newline='') as file:
+        csv_writer = csv.writer(file)
+        csv_writer.writerows([output_row])
 
 if __name__ == "__main__":
     main()

@@ -168,7 +168,7 @@ def top_balance_xact(cursor):
     print("=" * 85)  # Print a separator line
 
     for row in results:
-        cust_id, cust_name, balance, w_name, d_name = row
+        cust_name, balance, w_name, d_name = row
         print(f"{cust_name:<30} {balance:<15} {w_name:<20} {d_name:<20}")
 
 def related_customer_xact(c_w_id, c_d_id, c_id, cursor):

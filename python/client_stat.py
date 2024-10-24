@@ -15,6 +15,7 @@ class ClientStat:
                 conn.commit()
                 break
             except Exception as e:
+                print("An error occured:", str(e))
                 conn.rollback()
                 retry_count += 1
 

@@ -1,5 +1,7 @@
 from transactions_output import new_order_xact_output,payment_xact_output
 from decimal import Decimal
+from tabulate import tabulate
+
 def test_query(cursor):
     cursor.execute("SELECT w_id, w_name, w_city, w_state FROM warehouse LIMIT 5;")
     return cursor.fetchall()
@@ -179,7 +181,39 @@ def related_customer_xact(c_w_id, c_d_id, c_id, cursor):
     c_d_id: Customer's District ID
     c_id: Customer ID
     """
-    return test_query(cursor)
+    query = """
+        WITH last_orders AS (
+            SELECT O_W_ID, O_D_ID, O_ID, O_C_ID, MAX(O_ENTRY_D)
+            FROM orders
+            GROUP BY O_W_ID, O_D_ID, O_C_ID
+        ),
+        last_order_items AS (
+            SELECT O_W_ID, O_D_ID, O_ID, O_C_ID, OL_I_ID
+            FROM last_orders JOIN order_line
+            ON OL_W_ID = O_W_ID AND OL_D_ID = O_D_ID AND OL_O_ID = O_ID
+        )
+        SELECT c2.C_W_ID, c2.C_D_ID, c2.C_ID
+        FROM customer c1
+        JOIN customer c2 ON c1.C_STATE = c2.C_STATE
+        JOIN last_order_items lo1 ON (c1.C_W_ID = lo1.O_W_ID AND c1.C_D_ID = lo1.O_D_ID AND c1.C_ID = lo1.O_C_ID)
+        JOIN last_order_items lo2 ON (c2.C_W_ID = lo2.O_W_ID AND c2.C_D_ID = lo2.O_D_ID AND c2.C_ID = lo2.O_C_ID)
+        WHERE (c1.C_W_ID = %s AND c1.C_D_ID = %s AND c1.C_ID = %s)
+        AND NOT (c1.C_W_ID = c2.C_W_ID AND c1.C_D_ID = c2.C_D_ID AND c1.C_ID = c2.C_ID)
+        AND (lo1.OL_I_ID = lo2.OL_I_ID)
+        GROUP BY c2.C_W_ID, c2.C_D_ID, c2.C_ID
+        HAVING COUNT(*) >= 2
+        ORDER BY C_W_ID ASC, C_D_ID ASC, C_ID ASC;
+    """
+    cursor.execute(query, (c_w_id, c_d_id, c_id))
+    results = cursor.fetchall()
+
+    print(f"{'Warehouse ID':<15} {'District ID':<15} {'Customer ID':<15}")
+    print("=" * 45)  # Print a separator line
+
+    for row in results:
+        w_id, d_id, c_id = row
+        print(f"{w_id:<15} {d_id:<15} {c_id:<15}")
+    print()
 
 
 xact_dict = {

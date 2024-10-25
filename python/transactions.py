@@ -1,6 +1,5 @@
 from transactions_output import new_order_xact_output,payment_xact_output
 from decimal import Decimal
-from tabulate import tabulate
 
 def test_query(cursor):
     cursor.execute("SELECT w_id, w_name, w_city, w_state FROM warehouse LIMIT 5;")

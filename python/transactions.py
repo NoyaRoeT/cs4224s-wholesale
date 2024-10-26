@@ -1,3 +1,4 @@
+import datetime
 from transactions_output import new_order_xact_output,payment_xact_output
 from decimal import Decimal
 def test_query(cursor):
@@ -117,11 +118,73 @@ def payment_xact(c_w_id, c_d_id, c_id, payment, cursor):
         """, (payment, payment, c_w_id, c_d_id, c_id))
     payment_xact_output(c_w_id, c_d_id, c_id, payment, cursor)
 
+from datetime import datetime
+
 def delivery_xact(w_id, carrier_id, cursor):
     """
     w_id: Warehouse ID
     carrier_id: Carrier ID
     """
+    # Loop through each district from 1 to 10
+    for district_no in range(1, 11):
+        print(f"Processing delivery for warehouse {w_id}, district {district_no}")
+
+        # Step 1: Find the oldest unfulfilled order in this district
+        cursor.execute("""
+            SELECT O_ID, O_C_ID 
+            FROM "order" 
+            WHERE O_W_ID = %s AND O_D_ID = %s AND O_CARRIER_ID IS NULL 
+            ORDER BY O_ID ASC 
+            LIMIT 1;
+        """, (w_id, district_no))
+        
+        result = cursor.fetchone()
+        print(f"Oldest unfulfilled order in district {district_no}: {result}")
+
+        # If there's no unfulfilled order, skip to the next district
+        if not result:
+            print(f"No unfulfilled orders found for district {district_no}")
+            continue
+        
+        o_id, c_id = result
+
+        # Step 2: Update the order by setting O_CARRIER_ID to carrier_id
+        cursor.execute("""
+            UPDATE "order" 
+            SET O_CARRIER_ID = %s 
+            WHERE O_W_ID = %s AND O_D_ID = %s AND O_ID = %s;
+        """, (carrier_id, w_id, district_no, o_id))
+        print(f"Updated order {o_id} in district {district_no} with carrier ID {carrier_id}")
+
+        # Step 3: Update all order lines to set OL_DELIVERY_D to the current date/time
+        current_time = datetime.now()
+        cursor.execute("""
+            UPDATE order_line 
+            SET OL_DELIVERY_D = %s 
+            WHERE OL_W_ID = %s AND OL_D_ID = %s AND OL_O_ID = %s;
+        """, (current_time, w_id, district_no, o_id))
+        print(f"Updated delivery date for order lines of order {o_id} to {current_time}")
+
+        # Step 4: Calculate the total amount for the order and update the customer's balance
+        cursor.execute("""
+            SELECT SUM(OL_AMOUNT) 
+            FROM order_line 
+            WHERE OL_W_ID = %s AND OL_D_ID = %s AND OL_O_ID = %s;
+        """, (w_id, district_no, o_id))
+        
+        total_amount = cursor.fetchone()[0] or 0
+        print(f"Total amount for order {o_id}: {total_amount}")
+
+        # Step 5: Update the customer's balance and delivery count
+        cursor.execute("""
+            UPDATE customer 
+            SET C_BALANCE = C_BALANCE + %s, 
+                C_DELIVERY_CNT = C_DELIVERY_CNT + 1 
+            WHERE C_W_ID = %s AND C_D_ID = %s AND C_ID = %s;
+        """, (total_amount, w_id, district_no, c_id))
+        print(f"Updated customer {c_id} in district {district_no} with new balance and delivery count")
+
+    # Return test_query(cursor) for debugging or validation
     return test_query(cursor)
 
 def order_status_xact(c_w_id, c_d_id, c_id, cursor):
@@ -130,6 +193,45 @@ def order_status_xact(c_w_id, c_d_id, c_id, cursor):
     c_d_id: Customer's District ID
     c_id: Customer ID
     """
+    # Step 1: Get the customer's name and balance
+    cursor.execute("""
+        SELECT C_FIRST, C_MIDDLE, C_LAST, C_BALANCE
+        FROM customer
+        WHERE C_W_ID = %s AND C_D_ID = %s AND C_ID = %s;
+    """, (c_w_id, c_d_id, c_id))
+    customer_info = cursor.fetchone()
+    c_first, c_middle, c_last, c_balance = customer_info
+    
+    print(f"Customer Name: {c_first} {c_middle} {c_last}, Balance: {c_balance}")
+    
+    # Step 2: Get the last order for the customer
+    cursor.execute("""
+        SELECT O_ID, O_ENTRY_D, O_CARRIER_ID
+        FROM "order"
+        WHERE O_W_ID = %s AND O_D_ID = %s AND O_C_ID = %s
+        ORDER BY O_ID DESC
+        LIMIT 1;
+    """, (c_w_id, c_d_id, c_id))
+    order_info = cursor.fetchone()
+
+    if not order_info:
+        print(f"No orders found for customer {c_id}")
+        return
+
+    o_id, o_entry_d, o_carrier_id = order_info
+    print(f"Last Order ID: {o_id}, Entry Date: {o_entry_d}, Carrier ID: {o_carrier_id}")
+
+    # Step 3: Get order line items for the last order
+    cursor.execute("""
+        SELECT OL_I_ID, OL_SUPPLY_W_ID, OL_QUANTITY, OL_AMOUNT, OL_DELIVERY_D
+        FROM order_line
+        WHERE OL_W_ID = %s AND OL_D_ID = %s AND OL_O_ID = %s;
+    """, (c_w_id, c_d_id, o_id))
+    order_lines = cursor.fetchall()
+
+    for line in order_lines:
+        ol_i_id, ol_supply_w_id, ol_quantity, ol_amount, ol_delivery_d = line
+        print(f"Item ID: {ol_i_id}, Supply Warehouse: {ol_supply_w_id}, Quantity: {ol_quantity}, Amount: {ol_amount}, Delivery Date: {ol_delivery_d}")
     return test_query(cursor)
 
 def stock_level_xact(w_id, d_id, t, l, cursor):
@@ -139,6 +241,35 @@ def stock_level_xact(w_id, d_id, t, l, cursor):
     t: Threshold
     l: Number of last orders to be examined
     """
+    # Step 1: Get the next available order ID for the district
+    cursor.execute("""
+        SELECT D_NEXT_O_ID
+        FROM district
+        WHERE D_W_ID = %s AND D_ID = %s;
+    """, (w_id, d_id))
+    d_next_o_id = cursor.fetchone()[0]
+
+    # Step 2: Get items from the last L orders
+    cursor.execute("""
+        SELECT DISTINCT OL_I_ID
+        FROM order_line
+        WHERE OL_W_ID = %s AND OL_D_ID = %s AND OL_O_ID >= %s AND OL_O_ID < %s;
+    """, (w_id, d_id, d_next_o_id - l, d_next_o_id))
+    items = cursor.fetchall()
+
+    # Step 3: Count items where stock quantity is below the threshold
+    low_stock_count = 0
+    for (ol_i_id,) in items:
+        cursor.execute("""
+            SELECT S_QUANTITY
+            FROM stock
+            WHERE S_W_ID = %s AND S_I_ID = %s;
+        """, (w_id, ol_i_id))
+        s_quantity = cursor.fetchone()[0]
+        if s_quantity < t:
+            low_stock_count += 1
+
+    print(f"Number of items with stock below threshold {t}: {low_stock_count}")
     return test_query(cursor)
 
 def popular_item_xact(w_id, d_id, l, cursor):
@@ -147,6 +278,36 @@ def popular_item_xact(w_id, d_id, l, cursor):
     d_id: District ID
     l: Number of last orders to be examined
     """
+    # Step 1: Get the next available order ID for the district
+    cursor.execute("""
+        SELECT D_NEXT_O_ID
+        FROM district
+        WHERE D_W_ID = %s AND D_ID = %s;
+    """, (w_id, d_id))
+    d_next_o_id = cursor.fetchone()[0]
+
+    # Step 2: Get items and their quantities from the last L orders
+    cursor.execute("""
+        SELECT OL_I_ID, SUM(OL_QUANTITY) as total_qty, COUNT(DISTINCT OL_O_ID) as num_orders
+        FROM order_line
+        WHERE OL_W_ID = %s AND OL_D_ID = %s AND OL_O_ID >= %s AND OL_O_ID < %s
+        GROUP BY OL_I_ID
+        ORDER BY total_qty DESC, num_orders DESC, OL_I_ID ASC
+        LIMIT 5;
+    """, (w_id, d_id, d_next_o_id - l, d_next_o_id))
+    popular_items = cursor.fetchall()
+
+    print(f"District (W_ID={w_id}, D_ID={d_id}), Last {l} Orders:")
+    for ol_i_id, total_qty, num_orders in popular_items:
+        # Fetch item details
+        cursor.execute("""
+            SELECT I_NAME, I_PRICE
+            FROM item
+            WHERE I_ID = %s;
+        """, (ol_i_id,))
+        i_name, i_price = cursor.fetchone()
+        
+        print(f"Item ID: {ol_i_id}, Name: {i_name}, Price: {i_price}, Total Quantity: {total_qty}, Number of Orders: {num_orders}")
     return test_query(cursor)
 
 def top_balance_xact(cursor):

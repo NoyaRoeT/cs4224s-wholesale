@@ -256,9 +256,6 @@ def related_customer_xact(c_w_id, c_d_id, c_id, cursor):
                 cust_scores[cust_key] = 0
             cust_scores[cust_key] += 1
     
-    for cust_key, score in cust_scores.items():
-        print(f"Customer: {cust_key}, Score: {score}")
-
     related_custs = [key for key, count in cust_scores.items() if count >= 2]
     return related_customer_xact_output(c_w_id, c_d_id, c_id, related_custs)
 

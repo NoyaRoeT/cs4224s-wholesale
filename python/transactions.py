@@ -1,4 +1,4 @@
-from transactions_output import new_order_xact_output,payment_xact_output
+from transactions_output import *
 from decimal import Decimal
 
 def test_query(cursor):
@@ -180,39 +180,84 @@ def related_customer_xact(c_w_id, c_d_id, c_id, cursor):
     c_d_id: Customer's District ID
     c_id: Customer ID
     """
+    # Get data of specified customer
+    query = """
+        SELECT C_STATE
+        FROM customer
+        WHERE C_W_ID = %s AND C_D_ID = %s AND C_ID = %s
+    """
+    cursor.execute(query, (c_w_id, c_d_id, c_id))
+    results = cursor.fetchone()
+
+    if not results:
+        return related_customer_xact_output(c_w_id, c_d_id, c_id, [])
+    else:
+        c_state = results[0]
+
+    query = """
+        SELECT O_W_ID, O_D_ID, O_ID
+        FROM "order"
+        WHERE O_W_ID = %s AND O_D_ID = %s AND O_C_ID = %s
+        ORDER BY O_ENTRY_D DESC
+        LIMIT 1
+    """
+    cursor.execute(query, (c_w_id, c_d_id, c_id))
+    results = cursor.fetchone()
+    if not results:
+        return related_customer_xact_output(c_w_id, c_d_id, c_id, [])
+    o_w_id, o_d_id, o_id = results
+
+    query = """
+        SELECT OL_I_ID
+        FROM order_line
+        WHERE OL_W_ID = %s AND OL_D_ID = %s AND OL_O_ID = %s
+    """
+    cursor.execute(query, (o_w_id, o_d_id, o_id))
+    cust_items_set = {item[0] for item in cursor.fetchall()}
+    if not cust_items_set:
+        return related_customer_xact_output(c_w_id, c_d_id, c_id, [])
+
+    # Get data for all customers of same state
     query = """
         WITH last_orders AS (
-            SELECT O_W_ID, O_D_ID, O_ID, O_C_ID, MAX(O_ENTRY_D)
-            FROM orders
-            GROUP BY O_W_ID, O_D_ID, O_C_ID
+            SELECT a.O_W_ID, a.O_D_ID, a.O_C_ID, a.O_ID
+            FROM "order" a
+            JOIN (
+                SELECT O_W_ID, O_D_ID, O_C_ID, MAX(O_ENTRY_D) as O_ENTRY_D
+                FROM "order"
+                GROUP BY O_W_ID, O_D_ID, O_C_ID 
+            ) b 
+            ON a.O_W_ID = b.O_W_ID AND a.O_D_ID = b.O_D_ID AND a.O_C_ID = b.O_C_ID AND a.O_ENTRY_D = b.O_ENTRY_D
         ),
         last_order_items AS (
             SELECT O_W_ID, O_D_ID, O_ID, O_C_ID, OL_I_ID
             FROM last_orders JOIN order_line
             ON OL_W_ID = O_W_ID AND OL_D_ID = O_D_ID AND OL_O_ID = O_ID
         )
-        SELECT c2.C_W_ID, c2.C_D_ID, c2.C_ID
-        FROM customer c1
-        JOIN customer c2 ON c1.C_STATE = c2.C_STATE
-        JOIN last_order_items lo1 ON (c1.C_W_ID = lo1.O_W_ID AND c1.C_D_ID = lo1.O_D_ID AND c1.C_ID = lo1.O_C_ID)
-        JOIN last_order_items lo2 ON (c2.C_W_ID = lo2.O_W_ID AND c2.C_D_ID = lo2.O_D_ID AND c2.C_ID = lo2.O_C_ID)
-        WHERE (c1.C_W_ID = %s AND c1.C_D_ID = %s AND c1.C_ID = %s)
-        AND NOT (c1.C_W_ID = c2.C_W_ID AND c1.C_D_ID = c2.C_D_ID AND c1.C_ID = c2.C_ID)
-        AND (lo1.OL_I_ID = lo2.OL_I_ID)
-        GROUP BY c2.C_W_ID, c2.C_D_ID, c2.C_ID
-        HAVING COUNT(*) >= 2
-        ORDER BY C_W_ID ASC, C_D_ID ASC, C_ID ASC;
+        SELECT C_W_ID, C_D_ID, C_ID, OL_I_ID
+        FROM customer
+        JOIN last_order_items
+        ON C_W_ID = O_W_ID AND C_D_ID = O_D_ID AND C_ID = O_C_ID
+        WHERE C_STATE = %s
+        AND NOT (C_W_ID = %s AND C_D_ID = %s AND C_ID = %s)
+        ORDER BY C_W_ID, C_D_ID, C_ID
     """
-    cursor.execute(query, (c_w_id, c_d_id, c_id))
-    results = cursor.fetchall()
+    cursor.execute(query, (c_state, c_w_id, c_d_id, c_id))
+    other_custs = cursor.fetchall()
+    if not other_custs:
+        return related_customer_xact_output(c_w_id, c_d_id, c_id, [])
 
-    print(f"{'Warehouse ID':<15} {'District ID':<15} {'Customer ID':<15}")
-    print("=" * 45)  # Print a separator line
-
-    for row in results:
-        w_id, d_id, c_id = row
-        print(f"{w_id:<15} {d_id:<15} {c_id:<15}")
-    print()
+    # Record number of same items
+    cust_scores = {}
+    for c_w_id, c_d_id, c_id, ol_i_id in other_custs:
+        if ol_i_id in cust_items_set:
+            cust_key = (c_w_id, c_d_id, c_id)
+            if cust_key not in cust_scores:
+                cust_scores[cust_key] = 0
+            cust_scores[cust_key] += 1
+        
+    related_custs = [key for key, count in cust_scores.items() if count >= 2]
+    return related_customer_xact_output(c_w_id, c_d_id, c_id, related_custs)
 
 
 xact_dict = {

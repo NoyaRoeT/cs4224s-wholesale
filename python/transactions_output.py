@@ -1,7 +1,7 @@
 def new_order_xact_output(c_id, w_id, d_id,o_id, items, cursor):
 
     print("Transaction Summary:")
-    print("----------------------")
+    print("======================")
     
     # Display Customer Information
     cursor.execute("""
@@ -71,7 +71,7 @@ def new_order_xact_output(c_id, w_id, d_id,o_id, items, cursor):
 
 def payment_xact_output(c_w_id, c_d_id, c_id,payment,cursor):
     print("Transaction Summary:")
-    print("----------------------")
+    print("======================")
     cursor.execute("""
         SELECT C_FIRST, C_MIDDLE, C_LAST, C_STREET_1, C_STREET_2, C_CITY, C_STATE, C_ZIP, C_PHONE, 
                 C_SINCE, C_CREDIT, C_CREDIT_LIM, C_DISCOUNT, C_BALANCE
@@ -109,3 +109,18 @@ def payment_xact_output(c_w_id, c_d_id, c_id,payment,cursor):
     
     print("\nDistrict Address:")
     print(f"{district_info[0]}, {district_info[1]}, {district_info[2]}, {district_info[3]}, {district_info[4]}")
+
+def related_customer_xact_output(c_w_id, c_d_id, c_id, related_custs):
+    print("Transaction Summary:")
+    print("======================")
+    print(f"Customer Identifier (W_ID, D_ID, C_ID): ({c_w_id}, {c_d_id}, {c_id})")
+
+    print()
+
+    print(f"{'Warehouse ID':<15} {'District ID':<15} {'Customer ID':<15}")
+    print("-" * 45)  # Print a separator line
+
+    for row in related_custs:
+        w_id, d_id, c_id = row
+        print(f"{w_id:<15} {d_id:<15} {c_id:<15}")
+    print()

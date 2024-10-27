@@ -38,6 +38,9 @@ def main():
             handle_xact(params, xact_file, cursor, connection)
     print_client_stats(client_stat)
     write_client_stats(client_stat, file_idx)
+
+    cursor.close()
+    connection.close()
     
 def handle_xact(params,xact_file, cursor, conn):
     xact_key = params[0]

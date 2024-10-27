@@ -249,13 +249,16 @@ def related_customer_xact(c_w_id, c_d_id, c_id, cursor):
 
     # Record number of same items
     cust_scores = {}
-    for c_w_id, c_d_id, c_id, ol_i_id in other_custs:
-        if ol_i_id in cust_items_set:
-            cust_key = (c_w_id, c_d_id, c_id)
+    for other_w_id, other_d_id, other_c_id, other_i_id in other_custs:
+        if other_i_id in cust_items_set:
+            cust_key = (other_w_id, other_d_id, other_c_id)
             if cust_key not in cust_scores:
                 cust_scores[cust_key] = 0
             cust_scores[cust_key] += 1
-        
+    
+    for cust_key, score in cust_scores.items():
+        print(f"Customer: {cust_key}, Score: {score}")
+
     related_custs = [key for key, count in cust_scores.items() if count >= 2]
     return related_customer_xact_output(c_w_id, c_d_id, c_id, related_custs)
 

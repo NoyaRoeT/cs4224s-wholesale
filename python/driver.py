@@ -15,8 +15,11 @@ DB_USER = os.getenv('PGUSER', 'cs4224s')
 def main():
     proc_id = int(sys.argv[1])
     file_idx = proc_id - (1 + int(proc_id / 5))
+    if (file_idx == 0):
+        file_path = f"../xact_files/test.txt"
+    else:
+        return
     # file_path = f"../xact_files/{file_idx}.txt"
-    file_path = f"../xact_files/test.txt"
     
     # connect to db
     connection = psycopg2.connect(

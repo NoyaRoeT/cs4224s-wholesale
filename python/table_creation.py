@@ -167,7 +167,7 @@ def create_tables():
         """)
         print(f"order_line table creation ends")
         print(f"order_line table distribution starts")
-        cursor.execute(create_partition_key("order_line","ol_d_id"))
+        cursor.execute(create_partition_key("order_line","ol_w_id"))
         # cursor.execute(check_partition_key("order_line"))
         # result = cursor.fetchone()
         # print(result[0] +" partition key: "+ result[1])

@@ -194,40 +194,54 @@ def related_customer_xact(c_w_id, c_d_id, c_id, cursor):
     else:
         c_state = results[0]
 
+    # Get all last orders
+    query = """
+        SELECT O_W_ID, O_D_ID, O_C_ID, MAX(O_ENTRY_D)
+        FROM "order"
+        GROUP BY O_W_ID, O_D_ID, O_C_ID
+    """
+    cursor.execute(query)
+    results = cursor.fetchall()
+    last_orders_set = {(row[0], row[1], row[2], row[3]) for row in results}
+
+    for row in last_orders_set:
+        if (row[0], row[1], row[2]) == (c_w_id, c_d_id, c_id):
+            print("Specified customer is in last orders set")
+            break
+
     # Get orders of all customers with c_state
     query = """
-        SELECT C_W_ID, C_D_ID, C_ID, OL_I_ID
-        FROM customer, "order", order_line
+        SELECT C_W_ID, C_D_ID, C_ID, O_ENTRY_D, OL_I_ID
+        FROM customer
+        JOIN "order" ON C_W_ID = O_W_ID AND C_D_ID = O_D_ID AND C_ID = O_C_ID
+        JOIN order_line ON OL_W_ID = O_W_ID AND OL_D_ID = O_D_ID AND OL_O_ID = O_ID
         WHERE C_STATE = %s
-        AND C_W_ID = O_W_ID AND C_D_ID = O_D_ID AND C_ID = O_C_ID
-        AND OL_W_ID = O_W_ID AND OL_D_ID = O_D_ID AND OL_O_ID = O_ID
-        AND O_ENTRY_D IN (
-            SELECT MAX(O_ENTRY_D)
-            FROM "order"
-            GROUP BY O_W_ID, O_D_ID, O_C_ID 
-        )
     """
     cursor.execute(query, (c_state,))
     results = cursor.fetchall()
-    print(results[0], flush=True)
+
+    # filter out those that are not last orders
+    filtered_results = [
+        (row[0], row[1], row[2], row[4])
+        for row in results
+        if (row[0], row[1], row[2], row[3]) in last_orders_set
+    ]
+
 
     # Get items of last order of specified customer
-    specified_cust_key = (c_w_id, c_d_id, c_id)
+    specified_cust_key = (int(c_w_id), int(c_d_id), int(c_id))
     cust_items_set = set()
 
-    for row in results:
+    for row in filtered_results:
         warehouse_id, district_id, cust_id, item_id = row
         key = (warehouse_id, district_id, cust_id)
 
         if key == specified_cust_key:
             cust_items_set.add(item_id)
-    print(c_state)
-    print(cust_items_set)
-
     
     # Get scores for all other customers
     cust_scores = {}
-    for row in results:
+    for row in filtered_results:
         warehouse_id, district_id, cust_id, item_id = row
         key = (warehouse_id, district_id, cust_id)
 
@@ -236,9 +250,6 @@ def related_customer_xact(c_w_id, c_d_id, c_id, cursor):
                 cust_scores[key] = 0
             cust_scores[key] += 1
 
-    for key, count in cust_scores.items():
-        print(f"Customer {key}: {count}")
-    
     related_custs = [key for key, count in cust_scores.items() if count >= 2]
     sorted_related_custs = sorted(related_custs)
     return related_customer_xact_output(c_w_id, c_d_id, c_id, sorted_related_custs)

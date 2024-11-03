@@ -206,6 +206,20 @@ def create_tables():
         # print(result[0] +" partition key: "+ result[1])
         print(f"stock table distribution ends")
 
+        # Indexing
+        print("creating indexes...")
+
+        # For getting last order of a customer in related_cust
+        cursor.execute("""
+            CREATE INDEX IF NOT EXISTS idx_order_entry
+            ON "order" (O_W_ID, O_D_ID, O_C_ID, O_ENTRY_D DESC);
+        """)
+        
+        # For filtering by C_STATE in related_cust
+        cursor.execute("""
+            CREATE INDEX idx_customer_state ON customer (C_STATE);
+        """)
+
         # Commit the changes
         connection.commit()
     except Exception as e:

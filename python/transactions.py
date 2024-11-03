@@ -204,11 +204,6 @@ def related_customer_xact(c_w_id, c_d_id, c_id, cursor):
     results = cursor.fetchall()
     last_orders_set = {(row[0], row[1], row[2], row[3]) for row in results}
 
-    for row in last_orders_set:
-        if (row[0], row[1], row[2]) == (c_w_id, c_d_id, c_id):
-            print("Specified customer is in last orders set")
-            break
-
     # Get orders of all customers with c_state
     query = """
         SELECT C_W_ID, C_D_ID, C_ID, O_ENTRY_D, OL_I_ID
@@ -226,7 +221,6 @@ def related_customer_xact(c_w_id, c_d_id, c_id, cursor):
         for row in results
         if (row[0], row[1], row[2], row[3]) in last_orders_set
     ]
-
 
     # Get items of last order of specified customer
     specified_cust_key = (int(c_w_id), int(c_d_id), int(c_id))

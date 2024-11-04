@@ -12,8 +12,6 @@ def create_tables():
     coord_node = sys.argv[1]
     DB_HOST = coord_node
 
-    print(f"DB_HOST on table_creation is: {DB_HOST}")
-
     connection = psycopg2.connect(
         host=DB_HOST,
         port=DB_PORT,

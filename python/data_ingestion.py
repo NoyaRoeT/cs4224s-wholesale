@@ -168,8 +168,6 @@ def main():
 
     DB_HOST = args.coordinator_node
 
-    print(f"DB_HOST on data_ingestion is: {DB_HOST}")
-
     try:
         connection = psycopg2.connect(
             host=DB_HOST,

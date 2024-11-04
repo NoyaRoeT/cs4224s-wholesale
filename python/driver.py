@@ -23,8 +23,6 @@ def main():
     coord_node = sys.argv[2]
     DB_HOST = coord_node
     
-    print(f"DB_HOST on driver is: {DB_HOST}")
-
     # connect to db
     connection = psycopg2.connect(
         host=DB_HOST,

@@ -1,5 +1,6 @@
 from transactions_output import *
 from decimal import Decimal
+from datetime import datetime
 
 def test_query(cursor):
     cursor.execute("SELECT w_id, w_name, w_city, w_state FROM warehouse LIMIT 5;")
@@ -117,8 +118,6 @@ def payment_xact(c_w_id, c_d_id, c_id, payment, cursor):
         WHERE C_W_ID = %s AND C_D_ID = %s AND C_ID = %s;
         """, (payment, payment, c_w_id, c_d_id, c_id))
     payment_xact_output(c_w_id, c_d_id, c_id, payment, cursor)
-
-from datetime import datetime
 
 def delivery_xact(w_id, carrier_id, cursor):
     """

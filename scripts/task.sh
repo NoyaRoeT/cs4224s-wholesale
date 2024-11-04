@@ -117,8 +117,8 @@ if [ ${REMAINDER} -eq 0 ]; then
         wait_db_ready
 		source "$HOME/${PGUSER}_venv/bin/activate"
 		echo "Loading data"
-        python ../python/table_creation.py
-        python ../python/data_ingestion.py --w "../data_files/warehouse.csv" --d "../data_files/district.csv" --c "../data_files/customer.csv" --o "../data_files/order.csv" --i "../data_files/item.csv" --ol "../data_files/order-line.csv" --s "../data_files/stock.csv"
+        python ../python/table_creation.py $coordinator_node
+        python ../python/data_ingestion.py $coordinator_node --w "../data_files/warehouse.csv" --d "../data_files/district.csv" --c "../data_files/customer.csv" --o "../data_files/order.csv" --i "../data_files/item.csv" --ol "../data_files/order-line.csv" --s "../data_files/stock.csv"
         signal_data_ready
     fi
 fi
@@ -128,7 +128,7 @@ wait_data_ready
 if [ ${REMAINDER} -ne 0 ]; then
 	source "$HOME/${PGUSER}_venv/bin/activate"
 	echo "Running driver program..."
-    python ../python/driver.py $SLURM_PROCID
+    python ../python/driver.py $SLURM_PROCID $coordinator_node
 
 	signal_client_done
 fi

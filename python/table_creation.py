@@ -1,4 +1,5 @@
 import psycopg2
+import sys
 import os
 
 DB_HOST = 'localhost'
@@ -7,6 +8,10 @@ DB_NAME = os.getenv('PGDATABASE', 'project')
 DB_USER = os.getenv('PGUSER', 'cs4224s')
 
 def create_tables():
+    global DB_HOST
+    coord_node = sys.argv[1]
+    DB_HOST = coord_node
+
     connection = psycopg2.connect(
         host=DB_HOST,
         port=DB_PORT,
@@ -169,7 +174,7 @@ def create_tables():
         """)
         print(f"order_line table creation ends")
         print(f"order_line table distribution starts")
-        cursor.execute(create_partition_key("order_line","ol_d_id"))
+        cursor.execute(create_partition_key("order_line","ol_w_id"))
         # cursor.execute(check_partition_key("order_line"))
         # result = cursor.fetchone()
         # print(result[0] +" partition key: "+ result[1])
@@ -207,6 +212,20 @@ def create_tables():
         # result = cursor.fetchone()
         # print(result[0] +" partition key: "+ result[1])
         print(f"stock table distribution ends")
+
+        # Indexing
+        print("creating indexes...")
+
+        # For getting last order of a customer in related_cust
+        cursor.execute("""
+            CREATE INDEX IF NOT EXISTS idx_order_entry
+            ON "order" (O_W_ID, O_D_ID, O_C_ID, O_ENTRY_D DESC);
+        """)
+        
+        # For filtering by C_STATE in related_cust
+        cursor.execute("""
+            CREATE INDEX idx_customer_state ON customer (C_STATE);
+        """)
 
         # Commit the changes
         connection.commit()

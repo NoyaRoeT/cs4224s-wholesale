@@ -13,10 +13,15 @@ DB_NAME = os.getenv('PGDATABASE', 'project')
 DB_USER = os.getenv('PGUSER', 'cs4224s')
 
 def main():
+    global DB_HOST
+
     proc_id = int(sys.argv[1])
     file_idx = proc_id - (1 + int(proc_id / 5))
     # file_path = f"../xact_files/{file_idx}.txt"
     file_path = f"../xact_files/test.txt"
+
+    coord_node = sys.argv[2]
+    DB_HOST = coord_node
     
     # connect to db
     connection = psycopg2.connect(

@@ -153,7 +153,10 @@ def load_stock_data(csv_file_path,cursor):
         print(f"An error occurred: {e}")
 
 def main():
+    global DB_HOST
+
     parser = argparse.ArgumentParser("csv path")
+    parser.add_argument("coordinator_node", type=str)
     parser.add_argument("--w", type=str, default="")
     parser.add_argument("--d", type=str, default="")
     parser.add_argument("--c", type=str, default="")
@@ -162,6 +165,9 @@ def main():
     parser.add_argument("--ol", type=str, default="")
     parser.add_argument("--s", type=str, default="")
     args = parser.parse_args()
+
+    DB_HOST = args.coordinator_node
+
     try:
         connection = psycopg2.connect(
             host=DB_HOST,

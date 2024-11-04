@@ -1,4 +1,5 @@
 import psycopg2
+import sys
 import os
 
 DB_HOST = 'localhost'
@@ -7,6 +8,12 @@ DB_NAME = os.getenv('PGDATABASE', 'project')
 DB_USER = os.getenv('PGUSER', 'cs4224s')
 
 def create_tables():
+    global DB_HOST
+    coord_node = sys.argv[1]
+    DB_HOST = coord_node
+
+    print(f"DB_HOST on table_creation is: {DB_HOST}")
+
     connection = psycopg2.connect(
         host=DB_HOST,
         port=DB_PORT,

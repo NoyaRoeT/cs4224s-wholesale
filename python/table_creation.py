@@ -39,9 +39,6 @@ def create_tables():
         print(f"warehouse table creation ends")
         print(f"warehouse table distribution starts")
         cursor.execute(create_partition_key("warehouse","w_id"))
-        # cursor.execute(check_partition_key("warehouse"))
-        # result = cursor.fetchone()
-        # print(result[0] +" partition key: "+ result[1])
         print(f"warehouse table distribution ends")
 
         # 2. Create district table
@@ -66,9 +63,6 @@ def create_tables():
         print(f"district table creation ends")
         print(f"district table distribution starts")
         cursor.execute(create_partition_key("district","d_w_id"))
-        # cursor.execute(check_partition_key("district"))
-        # result = cursor.fetchone()
-        # print(result[0] +" partition key: "+ result[1])
         print(f"district table distribution ends")
 
         # 3. Create customer table
@@ -103,9 +97,6 @@ def create_tables():
         print(f"customer table creation ends")
         print(f"customer table distribution starts")
         cursor.execute(create_partition_key("customer","c_w_id"))
-        # cursor.execute(check_partition_key("customer"))
-        # result = cursor.fetchone()
-        # print(result[0] +" partition key: "+ result[1])
         print(f"customer table distribution ends")
 
         # 4. Create order table
@@ -127,9 +118,6 @@ def create_tables():
         print(f"order table creation ends")
         print(f"order table distribution starts")
         cursor.execute(create_partition_key("order","o_w_id"))
-        # cursor.execute(check_partition_key("order"))
-        # result = cursor.fetchone()
-        # print(result[0] +" partition key: "+ result[1])
         print(f"order table distribution ends")
 
         # 5. Create item table
@@ -146,12 +134,8 @@ def create_tables():
         """)
         print(f"item table creation ends")
         print(f"item table distribution starts")
-        cursor.execute(create_partition_key("item","i_id"))
+        # cursor.execute(create_partition_key("item","i_id"))
         cursor.execute("SELECT create_reference_table('item');")
-        
-        # cursor.execute(check_partition_key("item"))
-        # result = cursor.fetchone()
-        # print(result[0] +" partition key: "+ result[1])
         print(f"item table distribution ends")
 
         
@@ -175,9 +159,6 @@ def create_tables():
         print(f"order_line table creation ends")
         print(f"order_line table distribution starts")
         cursor.execute(create_partition_key("order_line","ol_w_id"))
-        # cursor.execute(check_partition_key("order_line"))
-        # result = cursor.fetchone()
-        # print(result[0] +" partition key: "+ result[1])
         print(f"order_line table distribution ends")
 
         

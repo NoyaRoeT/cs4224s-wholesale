@@ -181,10 +181,7 @@ def delivery_xact(w_id, carrier_id, cursor):
                 C_DELIVERY_CNT = C_DELIVERY_CNT + 1 
             WHERE C_W_ID = %s AND C_D_ID = %s AND C_ID = %s;
         """, (total_amount, w_id, district_no, c_id))
-        print(f"Updated customer {c_id} in district {district_no} with new balance and delivery count")
-
-    # Return test_query(cursor) for debugging or validation
-    return test_query(cursor)
+        print(f"Updated customer {(w_id, district_no, c_id)} with new balance and delivery count")
 
 def order_status_xact(c_w_id, c_d_id, c_id, cursor):
     """
@@ -231,7 +228,6 @@ def order_status_xact(c_w_id, c_d_id, c_id, cursor):
     for line in order_lines:
         ol_i_id, ol_supply_w_id, ol_quantity, ol_amount, ol_delivery_d = line
         print(f"Item ID: {ol_i_id}, Supply Warehouse: {ol_supply_w_id}, Quantity: {ol_quantity}, Amount: {ol_amount}, Delivery Date: {ol_delivery_d}")
-    return test_query(cursor)
 
 def stock_level_xact(w_id, d_id, t, l, cursor):
     """
@@ -269,7 +265,6 @@ def stock_level_xact(w_id, d_id, t, l, cursor):
             low_stock_count += 1
 
     print(f"Number of items with stock below threshold {t}: {low_stock_count}")
-    return test_query(cursor)
 
 def popular_item_xact(w_id, d_id, l, cursor):
     """

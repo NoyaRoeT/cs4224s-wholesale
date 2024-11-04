@@ -142,6 +142,8 @@ def create_tables():
         print(f"item table creation ends")
         print(f"item table distribution starts")
         cursor.execute(create_partition_key("item","i_id"))
+        cursor.execute("SELECT create_reference_table('item');")
+        
         # cursor.execute(check_partition_key("item"))
         # result = cursor.fetchone()
         # print(result[0] +" partition key: "+ result[1])

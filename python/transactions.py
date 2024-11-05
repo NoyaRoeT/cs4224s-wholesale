@@ -1,11 +1,6 @@
 from transactions_output import *
 from decimal import Decimal
 from datetime import datetime
-
-def test_query(cursor):
-    cursor.execute("SELECT w_id, w_name, w_city, w_state FROM warehouse LIMIT 5;")
-    return cursor.fetchall()
-
     
 def new_order_xact(c_id, w_id, d_id, items, cursor):
     """
@@ -302,7 +297,6 @@ def popular_item_xact(w_id, d_id, l, cursor):
         i_name, i_price = cursor.fetchone()
         
         print(f"Item ID: {ol_i_id}, Name: {i_name}, Price: {i_price}, Total Quantity: {total_qty}, Number of Orders: {num_orders}")
-    return test_query(cursor)
 
 def top_balance_xact(cursor):
     top_bal_query = """

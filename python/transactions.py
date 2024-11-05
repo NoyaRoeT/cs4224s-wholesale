@@ -27,7 +27,9 @@ def new_order_xact(c_id, w_id, d_id, items, cursor):
     # Start by assuming all items are local
     all_local = 1
     total_amount = 0
+
     # Process each item
+    order_details = []
     for i in range(len(items)):
         item_number = items[i][0]
         supplier_warehouse = items[i][1]
@@ -38,14 +40,14 @@ def new_order_xact(c_id, w_id, d_id, items, cursor):
             all_local = 0
 
         cursor.execute("""
-            SELECT I_PRICE, S_QUANTITY, S_YTD, S_ORDER_CNT, S_REMOTE_CNT 
+            SELECT I_NAME, I_PRICE, S_QUANTITY 
             FROM item, stock 
             WHERE I_ID = %s AND S_W_ID = %s AND S_I_ID = I_ID;
             """, (item_number, supplier_warehouse))
         
         item_info = cursor.fetchone()
         # Let S_QUANTITY denote the stock quantity for item ITEM_NUMBER[i] and warehouse SUPPLIER_WAREHOUSE[i]
-        i_price, s_quantity, s_ytd, s_order_cnt, s_remote_cnt = item_info
+        i_name, i_price, s_quantity = item_info
         adjusted_qty = s_quantity - quantity
         if adjusted_qty < 10:
             adjusted_qty += 100
@@ -55,7 +57,7 @@ def new_order_xact(c_id, w_id, d_id, items, cursor):
             UPDATE stock 
             SET S_QUANTITY = %s, S_YTD = S_YTD + %s, S_ORDER_CNT = S_ORDER_CNT + 1, S_REMOTE_CNT = S_REMOTE_CNT + %s
             WHERE S_W_ID = %s AND S_I_ID = %s;
-            """, (adjusted_qty, quantity, supplier_warehouse, item_number,1 if supplier_warehouse != w_id else 0 ))
+            """, (adjusted_qty, quantity, 1 if supplier_warehouse != w_id else 0, supplier_warehouse, item_number, ))
         
         # Calculate the amount for this order line
         item_amount = quantity * i_price
@@ -67,16 +69,19 @@ def new_order_xact(c_id, w_id, d_id, items, cursor):
             VALUES (%s, %s, %s, %s, %s, %s, %s, %s, NULL,'S_DIST_'||%s);
         """, (o_id, d_id, w_id, i+1, item_number, supplier_warehouse, quantity, item_amount,w_id))
 
+        # Collecting data for output
+        order_details.append((item_number, i_name, supplier_warehouse, quantity, item_amount, adjusted_qty))
+
         # items[i]+=(adjusted_qty,)
     cursor.execute("""
-        SELECT C_DISCOUNT, W_TAX, D_TAX
+        SELECT C_LAST, C_CREDIT, C_DISCOUNT, W_TAX, D_TAX
         FROM customer, warehouse, district
         WHERE C_W_ID = %s AND C_D_ID = %s AND C_ID = %s
         AND W_ID = %s AND D_W_ID = W_ID AND D_ID = %s;
     """, (w_id, d_id, c_id, w_id, d_id))
 
     customer_info = cursor.fetchone()
-    c_discount, w_tax, d_tax = customer_info
+    c_last, c_credit, c_discount, w_tax, d_tax = customer_info
     total_amount = total_amount * (1 + w_tax + d_tax) * (1 - c_discount)    
     # Insert the order
     cursor.execute("""
@@ -84,7 +89,9 @@ def new_order_xact(c_id, w_id, d_id, items, cursor):
         VALUES (%s, %s, %s, %s, CURRENT_TIMESTAMP, %s, %s);
     """, (o_id, d_id, w_id, c_id, len(items), all_local))
 
-    new_order_xact_output(c_id, w_id, d_id,o_id, items, cursor)
+    cust_info = (w_id, d_id, c_id, c_last, c_credit, c_discount)
+    tax_info = (w_tax, d_tax)
+    new_order_xact_output(cust_info, tax_info, o_id, order_details, total_amount, cursor)
 
 def payment_xact(c_w_id, c_d_id, c_id, payment, cursor):
     """

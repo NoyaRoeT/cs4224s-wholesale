@@ -32,7 +32,6 @@ def main():
     cursor = connection.cursor()
     # Enable repartition joins
     cursor.execute("SET citus.enable_repartition_joins = ON;")
-    
     with open(file_path, 'r') as xact_file:
         while True:
             line = xact_file.readline().strip()
@@ -49,7 +48,7 @@ def main():
 def handle_xact(params,xact_file, cursor, conn):
     xact_key = params[0]
     print("======================================================================")
-    print(f"Executing {tuple(params)}: {xact_names_dict[xact_key]} Transaction")
+    print(f"Executing xact {client_stat.get_num_xacts()}: {tuple(params)} ({xact_names_dict[xact_key]} Transaction)")
     print()
 
     # new order xact

@@ -1,7 +1,7 @@
 def new_order_xact_output(c_id, w_id, d_id,o_id, items, cursor):
 
-    print("Transaction Summary:")
-    print("======================")
+    print("New Order Transaction:")
+    print("=======================")
     
     # Display Customer Information
     cursor.execute("""
@@ -70,8 +70,8 @@ def new_order_xact_output(c_id, w_id, d_id,o_id, items, cursor):
 
 
 def payment_xact_output(c_w_id, c_d_id, c_id,payment,cursor):
-    print("Transaction Summary:")
-    print("======================")
+    print("Related-Customer Transaction:")
+    print("===============================")
     cursor.execute("""
         SELECT C_FIRST, C_MIDDLE, C_LAST, C_STREET_1, C_STREET_2, C_CITY, C_STATE, C_ZIP, C_PHONE, 
                 C_SINCE, C_CREDIT, C_CREDIT_LIM, C_DISCOUNT, C_BALANCE

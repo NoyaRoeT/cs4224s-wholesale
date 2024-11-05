@@ -288,7 +288,7 @@ def popular_item_xact(w_id, d_id, l, cursor):
         GROUP BY OL_I_ID
         ORDER BY total_qty DESC, num_orders DESC, OL_I_ID ASC
         LIMIT 5;
-    """, (w_id, d_id, d_next_o_id - l, d_next_o_id))
+    """, (w_id, d_id, d_next_o_id - int(l), d_next_o_id))
     popular_items = cursor.fetchall()
 
     print(f"District (W_ID={w_id}, D_ID={d_id}), Last {l} Orders:")

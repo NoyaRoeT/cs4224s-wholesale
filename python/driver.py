@@ -2,7 +2,7 @@ import sys
 import os
 import csv
 import psycopg2
-from transactions import get_xact_func
+from transactions import get_xact_func, xact_names_dict
 from client_stat import ClientStat
 
 client_stat = ClientStat()
@@ -49,6 +49,9 @@ def main():
     
 def handle_xact(params,xact_file, cursor, conn):
     xact_key = params[0]
+    print("======================================================================")
+    print(f"Executing {tuple(params)}: {xact_names_dict[xact_key]} Transaction")
+    print()
 
     # new order xact
     if xact_key == 'N':
@@ -69,7 +72,9 @@ def handle_xact(params,xact_file, cursor, conn):
     args = params[1: len(params)]
     args.append(cursor)
     xact_func = get_xact_func(xact_key)
-    return client_stat.record_xact(conn, xact_func, *args)
+    client_stat.record_xact(conn, xact_func, *args)
+    print("======================================================================")
+    print()
 
 # output stats for this client to stderr
 def print_client_stats(client_stat):

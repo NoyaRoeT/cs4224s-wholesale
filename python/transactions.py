@@ -244,10 +244,11 @@ def stock_level_xact(w_id, d_id, t, l, cursor):
         SELECT DISTINCT OL_I_ID
         FROM order_line
         WHERE OL_W_ID = %s AND OL_D_ID = %s AND OL_O_ID >= %s AND OL_O_ID < %s;
-    """, (w_id, d_id, d_next_o_id - l, d_next_o_id))
+    """, (w_id, d_id, d_next_o_id - int(l), d_next_o_id))
     items = cursor.fetchall()
 
     # Step 3: Count items where stock quantity is below the threshold
+    dec_threshold = Decimal(t)
     low_stock_count = 0
     for (ol_i_id,) in items:
         cursor.execute("""
@@ -256,7 +257,7 @@ def stock_level_xact(w_id, d_id, t, l, cursor):
             WHERE S_W_ID = %s AND S_I_ID = %s;
         """, (w_id, ol_i_id))
         s_quantity = cursor.fetchone()[0]
-        if s_quantity < t:
+        if s_quantity < dec_threshold:
             low_stock_count += 1
 
     print(f"Number of items with stock below threshold {t}: {low_stock_count}")
@@ -421,6 +422,17 @@ xact_dict = {
     'I': popular_item_xact,
     'T': top_balance_xact,
     'R': related_customer_xact
+}
+
+xact_names_dict = {
+    "N": "New Order",
+    "P": "Payment",
+    "D": "Delivery",
+    "O": "Order-Status",
+    "S": "Stock-Level",
+    "I": "Popular-Item",
+    "T": "Top-Balance",
+    "R": "Related-Customer"
 }
 
 def get_xact_func(xact_key):

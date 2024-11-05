@@ -28,13 +28,16 @@ def new_order_xact_output(c_id, w_id, d_id,o_id, items, cursor):
             ol.OL_SUPPLY_W_ID AS SUPPLIER_WAREHOUSE,
             ol.OL_QUANTITY AS QUANTITY,
             ol.OL_AMOUNT,
-            s.S_QUANTITY
+            s.S_QUANTITY,
+            o.o_entry_d
         FROM 
             order_line ol
         JOIN 
             item i ON ol.OL_I_ID = i.I_ID
         JOIN 
             stock s ON ol.OL_SUPPLY_W_ID = s.S_W_ID AND ol.OL_I_ID = s.S_I_ID
+        JOIN
+            "order" o ON ol.OL_W_ID=o.o_w_id AND ol.ol_d_id=o.o_d_id AND ol.ol_o_id=o.o_id
         WHERE 
             ol.OL_O_ID = %s AND ol.OL_D_ID = %s AND ol.OL_W_ID = %s;
     """
@@ -48,7 +51,7 @@ def new_order_xact_output(c_id, w_id, d_id,o_id, items, cursor):
 
     # Display Order Information
     print(f"Order Number: {o_id}")
-    # print(f"Order Entry Date: {o_entry_d}")
+    print(f"Order Entry Date: {order_details[0][6]}")
     print(f"Number of Items: {len(items)}")
     print(f"Total Amount for Order: ${len(order_details):.2f}")
     print()

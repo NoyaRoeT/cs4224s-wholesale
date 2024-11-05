@@ -22,11 +22,11 @@ def load_warehouse_data(csv_file_path,cursor):
         with open(csv_file_path, 'r') as f:
             cursor.copy_expert(copy_sql, f)
 
-        cursor.execute("SELECT * FROM warehouse;")
-        warehouses = cursor.fetchall()
-        print("warehouses in the table:")
-        for warehouse in warehouses:
-            print(warehouse)
+        # cursor.execute("SELECT * FROM warehouse;")
+        # warehouses = cursor.fetchall()
+        # print("warehouses in the table:")
+        # for warehouse in warehouses:
+        #     print(warehouse)
 
         print(f"warehouse data ingestion ends")
     except Exception as e:

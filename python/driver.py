@@ -17,8 +17,7 @@ def main():
 
     proc_id = int(sys.argv[1])
     file_idx = proc_id - (1 + int(proc_id / 5))
-    # file_path = f"../xact_files/{file_idx}.txt"
-    file_path = f"../xact_files/test.txt"
+    file_path = f"../xact_files/{file_idx}.txt"
 
     coord_node = sys.argv[2]
     DB_HOST = coord_node

@@ -19,10 +19,6 @@ signal_db_ready() {
 	touch $READY_FILE
 }
 
-clean_up() {
-	rm -rf $SIGNAL_DIR
-}
-
 wait_db_ready() {
 	local all_ready=0
 	while [ $all_ready -eq 0 ]; do
@@ -105,6 +101,36 @@ wait_data_ready() {
     done
 }
 
+clean_up() {
+	rm -rf $SIGNAL_DIR
+    for i in $(seq 0 19); do
+        rm "../output/${i}.csv"
+    done
+}
+
+get_config_files() {
+    POSTGRESQL_CONF="$PGDATA/postgresql.conf"
+    PG_HBA_CONF="$PGDATA/pg_hba.conf"
+    
+    # Check if the configuration files exist
+    if [ -f "$POSTGRESQL_CONF" ] && [ -f "$PG_HBA_CONF" ]; then
+        # Define destination directory
+        CONFIG_DIR="../config/"
+        
+        # Create the directory if it does not exist
+        mkdir -p "$CONFIG_DIR"
+        
+        # Copy the files to the destination directory
+        cp "$POSTGRESQL_CONF" "$CONFIG_DIR"
+        cp "$PG_HBA_CONF" "$CONFIG_DIR"
+        
+        echo "Configuration files copied to $CONFIG_DIR"
+    else
+        echo "ERROR: One or both configuration files are missing!"
+        return 1
+    fi
+}
+
 if [ ${REMAINDER} -eq 0 ]; then
 	mkdir -p $SIGNAL_DIR # prepare for file-based synchronization
     mkdir -p $OUTPUT_DIR # prepare output dir if it doesn't exist
@@ -140,6 +166,8 @@ if [ ${REMAINDER} -eq 0 ]; then
         python ../python/end_state.py
         signal_output_done
 
+        get_config_files
+        
         signal_worker_exit
         wait_workers_exit
 

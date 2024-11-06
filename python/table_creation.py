@@ -208,6 +208,11 @@ def create_tables():
             CREATE INDEX idx_customer_state ON customer (C_STATE);
         """)
 
+        # For top-balance transaction
+        cursor.execute("""
+            CREATE INDEX idx_customer_balance_desc ON customer (C_BALANCE DESC);
+        """)
+
         # Commit the changes
         connection.commit()
     except Exception as e:

@@ -188,7 +188,7 @@ def create_tables():
         """)
         print(f"stock table creation ends")
         print(f"stock table distribution starts")
-        cursor.execute(create_partition_key("stock","s_i_id"))
+        cursor.execute(create_partition_key("stock","s_w_id"))
         # cursor.execute(check_partition_key("stock"))
         # result = cursor.fetchone()
         # print(result[0] +" partition key: "+ result[1])
@@ -196,12 +196,6 @@ def create_tables():
 
         # Indexing
         print("creating indexes...")
-
-        # For getting last order of a customer in related_cust
-        cursor.execute("""
-            CREATE INDEX IF NOT EXISTS idx_order_entry
-            ON "order" (O_W_ID, O_D_ID, O_C_ID, O_ENTRY_D DESC);
-        """)
         
         # For filtering by C_STATE in related_cust
         cursor.execute("""

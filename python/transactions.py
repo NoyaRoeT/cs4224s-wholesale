@@ -136,7 +136,8 @@ def delivery_xact(w_id, carrier_id, cursor):
             FROM "order" 
             WHERE O_W_ID = %s AND O_D_ID = %s AND O_CARRIER_ID IS NULL 
             ORDER BY O_ID ASC 
-            LIMIT 1;
+            LIMIT 1
+            FOR UPDATE;
         """, (w_id, district_no))
         
         result = cursor.fetchone()
